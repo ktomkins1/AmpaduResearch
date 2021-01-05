@@ -1,11 +1,7 @@
 import numpy as np
+from numpy import sin, cos, arctan
+import numpy.lib.scimath.sqrt
 import matplotlib
-
-def sin(x):
-    return np.sin(x)
-
-def cos(x):
-    return np.cos(x)
 
 '''
     the following quantities describe the system:
@@ -65,6 +61,14 @@ def cos(x):
              
     
 '''
+
+def get_theta_s(s, alpha, rho):
+    return s*np.pi + arctan((1/alpha)*((rho**2 - 1)/(rho**2 + 1)))
+
+def get_E_0(theta_s, rho, LAMBDA):
+    E_0sq = (LAMBDA*sin(theta_s)*(rho**2 + 1))/\
+            (rho*((rho**2 - 1) - 4*LAMBDA*rho*sin(theta_s)))
+    return sqrt(E_0sq)
 
 
 
