@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import sin, cos, arctan
-import numpy.lib.scimath.sqrt
-import matplotlib
+from numpy.lib.scimath import sqrt
+import matplotlib.pyplot as plt
 
 '''
     the following quantities describe the system:
@@ -50,7 +50,7 @@ import matplotlib
     N_1 = LAMBDA*rho*sin(theta_s)
     N_2 = -1*LAMBDA*(rho**-1)*sin(theta_s)
     
-    (5) restriction if DELTA=0 for theta_s:
+    (5) restriction if DELTA=0:
     theta_s = s*pi + arctan((1/alpha)*((rho**2 - 1)/(rho**2 + 1)))
     s = 0,1
     
@@ -62,15 +62,22 @@ import matplotlib
     
 '''
 
-def get_theta_s(s, alpha, rho):
+def get_theta_s(s, rho, alpha=4):
     return s*np.pi + arctan((1/alpha)*((rho**2 - 1)/(rho**2 + 1)))
 
-def get_E_0(theta_s, rho, LAMBDA):
+def get_ref_amplitude(rho, LAMBDA, theta_s):
     E_0sq = (LAMBDA*sin(theta_s)*(rho**2 + 1))/\
             (rho*((rho**2 - 1) - 4*LAMBDA*rho*sin(theta_s)))
     return sqrt(E_0sq)
 
+def plot_all(E_1, E_2, t):
+    fig = plt.figure()
+    
 
+def dtE_1(t, E_1, LAMBDA, theta
+
+    
+    
 
 if __name__ == '__main__':
     
