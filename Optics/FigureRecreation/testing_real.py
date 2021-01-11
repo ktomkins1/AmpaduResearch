@@ -1,6 +1,7 @@
 import sympy as sp
 from sympy import sin,cos
 import numpy as np
+from numpy.lib.scimath import sqrt
 import matplotlib.pyplot as plt
 from scipy.integrate import ode, solve_ivp
 
@@ -64,28 +65,71 @@ def get_ivals_from_characteristics(E_0, rho, theta_s, alpha, LAMBDA):
     print("dlta:{0}, p1:{1}, p2:{2}".format(DELTA, P_1, P_2))
     return DELTA, P_1, P_2
 
-def main():
+def get_theta_s(s, rho, alpha=4):
+    #in case of zero detuning
+    return s*np.pi + np.arctan((1/alpha)*((rho**2 - 1)/(rho**2 + 1)))
+
+def get_ref_amplitude(rho, LAMBDA, theta_s):
+    #in case of symmetric pumping
+    E_0sq = (LAMBDA*np.sin(theta_s)*(rho**2 + 1))/(rho*((rho**2 - 1) - 4*LAMBDA*rho*np.sin(theta_s)))
+    return sqrt(E_0sq)
+    
+def get_sym_pr(E_0, LAMBDA, rho, theta_s):
+    return E_0**2 + (1 + 2*E_0**2)*LAMBDA*rho*np.sin(theta_s)
+
+def main(E_0, rho, theta_s, logLAMBDA, alpha=4, 
+         llsim=0, ulsim=10000, llcyc=3000, ulcyc=4000,
+         override_ivals=None, override_E_0=None, 
+         override_theta_s=None):
+    #constants!
+    tau_p = 2*10**-3
+    LAMBDA = 10**logLAMBDA
+    
+    if override_theta_s != None:
+        theta_s = get_theta_s(override_theta_s, rho, alpha=alpha)
+        print("theta_s:{0}".format(theta_s))
+        
+    if override_ivals == None:
+        DELTA, P_1, P_2 = get_ivals_from_characteristics(E_0, rho, theta_s, alpha, LAMBDA)
+    else:
+        DELTA, P_1, P_2 = override_ivals
+    
+    
+    if override_E_0 != None:
+        E_0 = get_ref_amplitude(rho, LAMBDA, theta_s)
+        P1 = get_sym_pr(E_0, LAMBDA, rho, theta_s)
+        P2 = P1
+    
     #Get the system of equations
-    LAMBDA = 10**(-2.2)
-    alpha = 4
-    theta_s = 2.75
-    rho = 0.24
-    DELTA, P_1, P_2 = get_ivals_from_characteristics(0.5, rho, theta_s, alpha, LAMBDA)
     funcs = setup(LAMBDA, DELTA, alpha, P_1, P_2, 1000)
     
     #Define time list and  initial value
-    init=[0.5,0.5,0,0,0]
+    init=[E_0,0.1,0,0,0]
     
-    r, time = time_and_result_1(init, funcs, 0, 4000)
-
+    r, t = time_and_result_2(init, funcs, llsim, ulsim)
+    time = t*tau_p
+    
     names = ['E1','E2','theta','N1','N2']
-    fig, axes = plt.subplots(5,1)
+    fig, axes = plt.subplots(5,1, sharex='col')
     fig.suptitle(','.join(map(str,init)))
     for k in range(len(r)):
         plot_data= r[k]
         ax = axes[k]
-        ax.title.set_text(names[k])
+        ax.set_title(names[k])
+        if k == 4: ax.set_xlabel("Time [ns]")
+        ax.set_ylabel("Amplitude")
         ax.plot(time, plot_data)
+        if k in [0,1]:
+            ax.axvline(x=llcyc*tau_p, color='r')
+            ax.axvline(x=ulcyc*tau_p, color='r')
+    #plt.show()
+    
+    fig2, axes2 = plt.subplots(1)
+    ax = axes2
+    ax.plot(r[0][llcyc:ulcyc], r[1][llcyc:ulcyc])
+    ax.set_title("Limit Cycle")
+    ax.set_xlabel("E_1")
+    ax.set_ylabel("E_2")
     plt.show()
 
 def time_and_result_1(init, funcs, ll, ul):
@@ -103,11 +147,14 @@ def time_and_result_1(init, funcs, ll, ul):
 
 def time_and_result_2(init, funcs, ll, ul):
     #Calculate the result
-    res_map = solve_ivp(int_step, (ll, ul), init, args=(funcs,))
+    res_map = solve_ivp(int_step, (ll, ul), init, args=(funcs,), dense_output=True, max_step=1.0)
     return res_map['y'], res_map['t']
     
 
 if __name__ == '__main__':
-    main()
+    main(0.5, 0.20, 1.89, -2.2)
+    main(0.5, 0.24, 2.75, -2.2)
+    main(0.5, 0.05, np.pi, -2.2, llcyc=6000, ulcyc=7000)
+    main(0.5, 0.005, np.pi, -2.2, llcyc=6000, ulcyc=7000)
     
     
