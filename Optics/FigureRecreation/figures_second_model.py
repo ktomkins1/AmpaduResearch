@@ -217,8 +217,9 @@ def plot_single_analysis(E_0, P, DELTA, eta, b=4, T=1000,
     bfdiag_points - the list of lists of peaks found for each eta
     freqs - the list (np array/matrix) of frequencies for each eta
 '''
-def eta_sweep(e_min, e_max, e_step, P, DELTA, b=4, T=1000, reverse=False,
-              llsim=0, ulsim=10000, llcyc=5500, ulcyc=6000):
+def eta_sweep(e_min, e_max, e_step, P, DELTA, b=4, T=1000, 
+              reverse=False, llsim=0, ulsim=10000, sim_step=0.5,
+              llcyc=5500, ulcyc=6000, continuation=False):
     #Define initial values
     init=[np.sqrt(P),0,0]
     
@@ -244,11 +245,10 @@ def eta_sweep(e_min, e_max, e_step, P, DELTA, b=4, T=1000, reverse=False,
         funcs = setup(P, DELTA, b, eta, T)
         
         #Take a window into the relevant portion of the E-field trace
-        if not first_run:
-            f_out = simulate_functions(init, funcs, llsim, ulsim, step=1.0)[0][0][llcyc:ulcyc]
-        else:
-            f_out, times = simulate_functions(init, funcs, llsim, ulsim, step=0.5)
-            f_out = f_out[0][llcyc:ulcyc]
+        y, t = simulate_functions(init, funcs, llsim, ulsim, step=sim_step)
+        f_out = y[0][llcyc:ulcyc]
+        if continuation: init = [i[-1] for i in y]
+            #print('size of init: {0}\r'.format(len(init)))
         
         #Perform frequency analysis on that window
         #freqs[n] = freq_analysis_trace(f_out, times, 0)
@@ -276,8 +276,8 @@ def convert_bf_to_traces(bfdiag_points):
 '''
     Based on bifurcation analysis, plot all points
 '''
-def plot_bif_diag(e_values, bfdiag_points, override_fig=None, override_ax=None):
-    our_color = 'k'
+def plot_bif_diag(e_values, bfdiag_points, override_fig=None, override_ax=None,
+                  our_color='k'):
     if type(override_fig) is type(None) and type(override_ax) is type(None):
         fig, ax = plt.subplots()
         fig.suptitle("Bifurcation analysis of eta from {0} to {1}".format(
@@ -285,21 +285,20 @@ def plot_bif_diag(e_values, bfdiag_points, override_fig=None, override_ax=None):
                         round(e_values[-1], 4)))
         ax.plot(e_values, np.ones_like(e_values), '--')
     else:
-        our_color='r'
         fig = override_fig
         ax = override_ax
     
-    skipfrom = None
-    for n, eta in enumerate(e_values):
-        if eta >= 0.0093:
-            skipfrom=n
-            break
-    
-    for t in convert_bf_to_traces(bfdiag_points):
-        ax.plot(e_values[0:skipfrom], t[0:skipfrom], ':', c=our_color)
+#    skipfrom = None
+#    for n, eta in enumerate(e_values):
+#        if eta >= 0.0093:
+#            skipfrom=n
+#            break
+#    
+#    for t in convert_bf_to_traces(bfdiag_points):
+#        ax.plot(e_values[0:skipfrom], t[0:skipfrom], ':', c=our_color)
         
     for n, eta in enumerate(e_values):
-        if n < skipfrom: continue
+        #if n < skipfrom: continue
         for pt in bfdiag_points[n]:
             try:
                 ax.scatter(eta, pt, s=1, c=our_color)
@@ -320,8 +319,9 @@ def save_data(e_values, bfdiag_points, freqs):
     pass
 
 if __name__ == '__main__':
-    ev, bf, fr = eta_sweep(0.0092, 0.0125, 0.0005, 0.375, 0, T=155)#, reverse=True)
-    ev2, bf2, _ = eta_sweep(0.0092, 0.0125, 0.0005, 0.375, 0, T=155, reverse=True)
+    ev, bf, fr = eta_sweep(0.002, 0.0125, 0.000005, 0.375, 0, T=155)
+    ev2, bf2, _ = eta_sweep(0.002, 0.0125, 0.000005, 0.375, 0, T=155,
+                            continuation=True, our_color='b')
     
     save_data(ev, bf, fr)
     
