@@ -1,11 +1,12 @@
-import sympy as sp
-from sympy import sin,cos
+#import sympy as sp
+#from sympy import sin,cos
 import numpy as np
 from numpy.lib.scimath import sqrt
 import matplotlib.pyplot as plt
 from scipy.integrate import ode, solve_ivp
 from scipy.signal import find_peaks
-
+import pickle
+from model_phys_review_1996 import setup
 
 '''
     Create the functions for simulation.  
@@ -22,7 +23,7 @@ from scipy.signal import find_peaks
     b - Linewidth enhancement factor
     eta - Coupling coeff
     T - Ratio of carrier to photon lifetime
-'''
+
 def setup(P, DELTA, b, eta, T):
     #Define variables and expressions
     E, psi, N = sp.var('E, psi, N')
@@ -38,6 +39,7 @@ def setup(P, DELTA, b, eta, T):
     func3 = sp.lambdify(symbols,exp3,"numpy")
     funcs=[func1,func2,func3]
     return funcs
+'''
 
 '''
     One single frame of integration
@@ -71,10 +73,10 @@ def int_step(t,y,funcs):
     0 - list of traces created [s1(t), s2(t), ... sn(t)]
     1 - the associated time steps
 '''
-def simulate_functions(initial_values, funcs, ll, ul, step=1.0):
+def simulate_functions(initial_values, funcs, ll, ul, step=1.0, tol=5e-9):
     #Calculate the result
     res_map = solve_ivp(int_step, [ll, ul], initial_values,
-                        args=(funcs,), max_step=step, rtol=5e-9)
+                        args=(funcs,), max_step=step, rtol=tol)
     return res_map['y'], res_map['t']
 
 '''
@@ -163,7 +165,7 @@ def plot_limit_cycle(trace1, trace2, name1, name2):
     llcyc - for creating a window into traces, the lower bound
     ulcyc - for creating a window into traces, the upper bound
 '''
-def plot_single_analysis(E_0, P, DELTA, eta, b=4, T=1000,
+def plot_single_analysis(P, DELTA, eta, b=4, T=1000,
          llsim=0, ulsim=10000, llcyc=3000, ulcyc=5000):
     #constants!
     tau_p = 2*(10**-3) # tau_p is the photon lifetime
@@ -183,7 +185,7 @@ def plot_single_analysis(E_0, P, DELTA, eta, b=4, T=1000,
     
     names = ['E','N','psi'] #names of each trace
     
-    plot_n_traces(traces, time_trace, names)
+    plot_n_traces(traces, time_trace, names, 'System for Eta of {0}'.format(eta))
     plot_limit_cycle(traces[0][llcyc:ulcyc], traces[1][llcyc:ulcyc],
                      names[0], names[1])
     
@@ -219,7 +221,7 @@ def plot_single_analysis(E_0, P, DELTA, eta, b=4, T=1000,
 '''
 def eta_sweep(e_min, e_max, e_step, P, DELTA, b=4, T=1000, 
               reverse=False, llsim=0, ulsim=10000, sim_step=0.5,
-              llcyc=5500, ulcyc=6000, continuation=False):
+              llcyc=5500, ulcyc=6000, continuation=True):
     #Define initial values
     init=[np.sqrt(P),0,0]
     
@@ -227,6 +229,7 @@ def eta_sweep(e_min, e_max, e_step, P, DELTA, b=4, T=1000,
     e_values = np.arange(e_min, e_max, e_step)
     if reverse: e_values = np.flip(e_values)
     e_size = e_values.size
+    print('Performing {0} simulations...'.format(e_size))
     
     #The empty bfdiag:
     bfdiag_points = []
@@ -258,6 +261,9 @@ def eta_sweep(e_min, e_max, e_step, P, DELTA, b=4, T=1000,
         bfdiag_points[n] += list(f_out[find_peaks(-f_out)[0]][:4])
     print('\nEta sweep complete')
     return e_values, bfdiag_points, freqs
+
+def find_all_extrema(trace):
+    pass
     
 def convert_bf_to_traces(bfdiag_points):
     #convert bfdiag scatter points to traces
@@ -319,14 +325,17 @@ def save_data(e_values, bfdiag_points, freqs):
     pass
 
 if __name__ == '__main__':
-    ev, bf, fr = eta_sweep(0.002, 0.0125, 0.000005, 0.375, 0, T=155)
-    ev2, bf2, _ = eta_sweep(0.002, 0.0125, 0.000005, 0.375, 0, T=155,
-                            continuation=True, our_color='b')
+    plot_single_analysis(0.375, 0, 0.012760, T=155)
+    ev, bf, _ = eta_sweep(0.0127, 0.0129, 0.000001, 0.375, 0, T=155)
+    plot_bif_diag(ev, bf)
+    plt.show()
     
-    save_data(ev, bf, fr)
+    ev, bf, _ = eta_sweep(0.0001, 0.0025, 0.00001, 0.375, 0, b=10)
     
-    fig, ax = plot_bif_diag(ev, bf)
-    plot_bif_diag(ev2, bf2, fig, ax)
+    #save_data(ev, bf, None)
+    
+    plot_bif_diag(ev, bf)
+    #plot_bif_diag(ev2, bf2, fig, ax)
     #plot_waterfall(ev, fr)
     plt.show()
     
