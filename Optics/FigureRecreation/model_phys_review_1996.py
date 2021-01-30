@@ -33,3 +33,6 @@ def setup(P, DELTA, b, eta, T):
     func3 = sp.lambdify(symbols,exp3,"numpy")
     funcs=[func1,func2,func3]
     return funcs
+    
+def get_names():
+    return ['E', 'psi', 'N']

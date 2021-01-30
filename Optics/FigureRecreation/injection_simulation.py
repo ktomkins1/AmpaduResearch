@@ -1,12 +1,12 @@
-#import sympy as sp
-#from sympy import sin,cos
 import numpy as np
 from numpy.lib.scimath import sqrt
 import matplotlib.pyplot as plt
 from scipy.integrate import ode, solve_ivp
 from scipy.signal import find_peaks
 import pickle
-from model_phys_review_1996 import setup
+from model_phys_review_1996 import setup, get_names
+from maxima_determination import get_extrema
+from injection_visualization import plot_bif_diag
 
 '''
     One single frame of integration
@@ -72,7 +72,6 @@ def normalize_trace(trace, width):
     rolling_avg = np.convolve(np.ones(width)/width, trace, mode='same')
     return trace - rolling_avg
 
-
 '''
     Plot the analysis of a single set of input parameters
     
@@ -90,16 +89,10 @@ def normalize_trace(trace, width):
     llcyc - for creating a window into traces, the lower bound
     ulcyc - for creating a window into traces, the upper bound
 '''
-def plot_single_analysis(P, DELTA, eta, b=4, T=1000,
-         llsim=0, ulsim=10000, llcyc=3000, ulcyc=5000):
-    #constants!
-    tau_p = 2*(10**-3) # tau_p is the photon lifetime
-    
+def trace_single_analysis(init, P, DELTA, eta, b=4, T=1000,
+                          llsim=0, ulsim=10000, llcyc=3000, ulcyc=5000):
     #Get the system of equations
     funcs = setup(P, DELTA, b, eta, T)
-    
-    #Define initial values
-    init=[np.sqrt(P),0,0]
     
     #simulate the system for bounds llsim and ulsim (lower and upper level)
     traces, time_trace = simulate_functions(init, funcs, llsim, ulsim)
@@ -108,19 +101,7 @@ def plot_single_analysis(P, DELTA, eta, b=4, T=1000,
     norm_e = normalize_trace(traces[0], 100)
     fft_trace = freq_analysis_trace(norm_e, time_trace, 1.0)
     
-    names = ['E','N','psi'] #names of each trace
-    
-    plot_n_traces(traces, time_trace, names, 'System for Eta of {0}'.format(eta))
-    plot_limit_cycle(traces[0][llcyc:ulcyc], traces[1][llcyc:ulcyc],
-                     names[0], names[1])
-    
-    #plot frequency analysis:
-    f, ax = plt.subplots()
-    f.suptitle("Frequency Spectrum")
-    ax.plot(fft_trace)
-    ax.set_xlabel("Freq (Hz?)")
-    
-    plt.show()
+    return time_trace, traces, ffr_trace
 
 '''
     Sweep through eta values, recording the min and max points in the resulting
@@ -167,7 +148,6 @@ def eta_sweep(e_min, e_max, e_step, P, DELTA, b=4, T=1000,
     for n in range(e_size):
         bfdiag_points.append([])
     for n, eta in enumerate(e_values):
-        #if reverse: n = e_size - n - 1
         print('n is: {0}\r'.format(n), end='')
         #Get the system of equations
         funcs = setup(P, DELTA, b, eta, T)
@@ -176,20 +156,17 @@ def eta_sweep(e_min, e_max, e_step, P, DELTA, b=4, T=1000,
         y, t = simulate_functions(init, funcs, llsim, ulsim, step=sim_step)
         f_out = y[0][llcyc:ulcyc]
         if continuation: init = [i[-1] for i in y]
-            #print('size of init: {0}\r'.format(len(init)))
         
         #Perform frequency analysis on that window
         #freqs[n] = freq_analysis_trace(f_out, times, 0)
         
         #Find all local minima and maxima and add them to the bifurcation diagrm
-        bfdiag_points[n] += list(f_out[find_peaks(f_out)[0]][:4])
-        bfdiag_points[n] += list(f_out[find_peaks(-f_out)[0]][:4])
+        #bfdiag_points[n] += list(f_out[find_peaks(f_out)[0]][:4])
+        #bfdiag_points[n] += list(f_out[find_peaks(-f_out)[0]][:4])
+        bfdiag_points[n] = get_extrema(f_out, np.log10(max(f_out)))
     print('\nEta sweep complete')
     return e_values, bfdiag_points, freqs
-
-def find_all_extrema(trace):
-    pass
-    
+ 
 def convert_bf_to_traces(bfdiag_points):
     #convert bfdiag scatter points to traces
     bfdiag_traces = []
@@ -204,23 +181,13 @@ def convert_bf_to_traces(bfdiag_points):
         bfdiag_traces.append(np.array(trace))
     return bfdiag_traces
     
-    
 def save_data(e_values, bfdiag_points, freqs):
     pass
 
 if __name__ == '__main__':
-    plot_single_analysis(0.375, 0, 0.012760, T=155)
-    ev, bf, _ = eta_sweep(0.0127, 0.0129, 0.000001, 0.375, 0, T=155)
+    #plot_single_analysis(0.375, 0, 0.012760, T=155)
+    ev, bf, _ = eta_sweep(0.002, 0.0129, 0.000001, 0.375, 0, T=155)
     plot_bif_diag(ev, bf)
-    plt.show()
-    
-    ev, bf, _ = eta_sweep(0.0001, 0.0025, 0.00001, 0.375, 0, b=10)
-    
-    #save_data(ev, bf, None)
-    
-    plot_bif_diag(ev, bf)
-    #plot_bif_diag(ev2, bf2, fig, ax)
-    #plot_waterfall(ev, fr)
     plt.show()
     
     
