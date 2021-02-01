@@ -1,12 +1,7 @@
 import numpy as np
 from numpy.lib.scimath import sqrt
-import matplotlib.pyplot as plt
 from scipy.integrate import ode, solve_ivp
-from scipy.signal import find_peaks
-import pickle
-from model_phys_review_1996 import setup, get_names
 from maxima_determination import get_extrema
-from injection_visualization import plot_bif_diag
 
 '''
     One single frame of integration
@@ -93,7 +88,7 @@ def normalize_trace(trace, width):
     llcyc - for creating a window into traces, the lower bound
     ulcyc - for creating a window into traces, the upper bound
 '''
-def trace_single_analysis(init, P, DELTA, eta, b=4, T=1000, sim_step=1.0,
+def trace_single_analysis(setup, init, P, DELTA, eta, b=4, T=1000, sim_step=1.0,
                           llsim=0, ulsim=10000, llcyc=3000, ulcyc=5000):
     #Get the system of equations
     funcs = setup(P, DELTA, b, eta, T)
@@ -129,7 +124,7 @@ def trace_single_analysis(init, P, DELTA, eta, b=4, T=1000, sim_step=1.0,
     bfdiag_points - the list of lists of peaks found for each eta
     freqs - the list (np array/matrix) of frequencies for each eta
 '''
-def eta_sweep(e_min, e_max, e_step, P, DELTA, b=4, T=1000, 
+def eta_sweep(setup, e_min, e_max, e_step, P, DELTA, b=4, T=1000, 
               reverse=False, llsim=0, ulsim=6000, sim_step=1.0,
               llcyc=5500, ulcyc=6000, continuation=True):
     #Define initial values
@@ -185,13 +180,6 @@ def convert_bf_to_traces(bfdiag_points):
         bfdiag_traces.append(np.array(trace))
     return bfdiag_traces
     
-def save_data(e_values, bfdiag_points, freqs):
-    pass
 
-if __name__ == '__main__':
-    #plot_single_analysis(0.375, 0, 0.012760, T=155)
-    ev, bf, _ = eta_sweep(0.003, 0.013, 0.000005, 0.375, 0, T=155, reverse=True)
-    plot_bif_diag(ev, bf)
-    plt.show()
     
     
