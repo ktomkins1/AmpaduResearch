@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 '''
     Create a plot for each of the associated traces in a list
@@ -26,7 +27,7 @@ def plot_n_traces(traces, time_trace, trace_names, title, Ebounds=[-1.0,1.5]):
         if name[0] == 'E':
             # this is an E trace so use the bounds
             ax.set_ybound(lower=Ebounds[0], upper=Ebounds[1])
-
+    return plt.show
 '''
     Plot one trace against another - useful for limit cycles
     
@@ -42,7 +43,7 @@ def plot_limit_cycle(trace1, trace2, name1, name2):
     axes.plot(trace1, trace2)
     axes.set_xlabel(name1)
     axes.set_ylabel(name2)
-
+    return plot.show
     
 '''
     Based on bifurcation analysis, plot all points

@@ -18,11 +18,15 @@ from injection_visualization import plot_bif_diag
     y - the vectorized current state of the system [s1, s2, ... sn]
     funcs - the python functions corresponding to each diff eq F1..n
 '''
+#def int_step(t,y,funcs):
+#    result=[]
+#    for i in range(len(y)):
+#        result.append(funcs[i](*y))
+#    return result
+
 def int_step(t,y,funcs):
-    result=[]
-    for i in range(len(y)):
-        result.append(funcs[i](*y))
-    return result
+    #return np.array([f(*y) for f in funcs])
+    return np.array([f(*y) for f in funcs])
 
 '''
     Perform simulation of the system using the Initial Value Problem approach
@@ -40,10 +44,10 @@ def int_step(t,y,funcs):
     0 - list of traces created [s1(t), s2(t), ... sn(t)]
     1 - the associated time steps
 '''
-def simulate_functions(initial_values, funcs, ll, ul, step=1.0, tol=5e-9):
+def simulate_functions(initial_values, funcs, ll, ul, step=1.0, tol=None):
     #Calculate the result
     res_map = solve_ivp(int_step, [ll, ul], initial_values,
-                        args=(funcs,), max_step=step, rtol=tol)
+                        args=(funcs,), max_step=step)#, rtol=tol)
     return res_map['y'], res_map['t']
 
 '''
@@ -89,19 +93,19 @@ def normalize_trace(trace, width):
     llcyc - for creating a window into traces, the lower bound
     ulcyc - for creating a window into traces, the upper bound
 '''
-def trace_single_analysis(init, P, DELTA, eta, b=4, T=1000,
+def trace_single_analysis(init, P, DELTA, eta, b=4, T=1000, sim_step=1.0,
                           llsim=0, ulsim=10000, llcyc=3000, ulcyc=5000):
     #Get the system of equations
     funcs = setup(P, DELTA, b, eta, T)
     
     #simulate the system for bounds llsim and ulsim (lower and upper level)
-    traces, time_trace = simulate_functions(init, funcs, llsim, ulsim)
+    traces, time_trace = simulate_functions(init, funcs, llsim, ulsim, step=sim_step)
     
     #normalize the electric field and perform a DFT on it
     norm_e = normalize_trace(traces[0], 100)
     fft_trace = freq_analysis_trace(norm_e, time_trace, 1.0)
     
-    return time_trace, traces, ffr_trace
+    return time_trace, traces, fft_trace
 
 '''
     Sweep through eta values, recording the min and max points in the resulting
@@ -126,7 +130,7 @@ def trace_single_analysis(init, P, DELTA, eta, b=4, T=1000,
     freqs - the list (np array/matrix) of frequencies for each eta
 '''
 def eta_sweep(e_min, e_max, e_step, P, DELTA, b=4, T=1000, 
-              reverse=False, llsim=0, ulsim=10000, sim_step=0.5,
+              reverse=False, llsim=0, ulsim=6000, sim_step=1.0,
               llcyc=5500, ulcyc=6000, continuation=True):
     #Define initial values
     init=[np.sqrt(P),0,0]
@@ -163,7 +167,7 @@ def eta_sweep(e_min, e_max, e_step, P, DELTA, b=4, T=1000,
         #Find all local minima and maxima and add them to the bifurcation diagrm
         #bfdiag_points[n] += list(f_out[find_peaks(f_out)[0]][:4])
         #bfdiag_points[n] += list(f_out[find_peaks(-f_out)[0]][:4])
-        bfdiag_points[n] = get_extrema(f_out, np.log10(max(f_out)))
+        bfdiag_points[n] = get_extrema(f_out, 0.001)
     print('\nEta sweep complete')
     return e_values, bfdiag_points, freqs
  
@@ -186,7 +190,7 @@ def save_data(e_values, bfdiag_points, freqs):
 
 if __name__ == '__main__':
     #plot_single_analysis(0.375, 0, 0.012760, T=155)
-    ev, bf, _ = eta_sweep(0.002, 0.0129, 0.000001, 0.375, 0, T=155)
+    ev, bf, _ = eta_sweep(0.003, 0.013, 0.000005, 0.375, 0, T=155, reverse=True)
     plot_bif_diag(ev, bf)
     plt.show()
     
