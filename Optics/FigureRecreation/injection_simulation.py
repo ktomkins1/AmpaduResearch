@@ -13,12 +13,6 @@ from maxima_determination import get_extrema
     y - the vectorized current state of the system [s1, s2, ... sn]
     funcs - the python functions corresponding to each diff eq F1..n
 '''
-#def int_step(t,y,funcs):
-#    result=[]
-#    for i in range(len(y)):
-#        result.append(funcs[i](*y))
-#    return result
-
 def int_step(t,y,funcs):
     #return np.array([f(*y) for f in funcs])
     return np.array([f(*y) for f in funcs])
@@ -124,9 +118,9 @@ def trace_single_analysis(setup, init, P, DELTA, eta, b=4, T=1000, sim_step=1.0,
     bfdiag_points - the list of lists of peaks found for each eta
     freqs - the list (np array/matrix) of frequencies for each eta
 '''
-def eta_sweep(setup, e_min, e_max, e_step, P, DELTA, b=4, T=1000, 
-              reverse=False, llsim=0, ulsim=6000, sim_step=1.0,
-              llcyc=5500, ulcyc=6000, continuation=True):
+def eta_sweep(setup, e_min, e_max, e_step, P, DELTA, alpha=4, T=1000,       #TODO: take in axis, sweep other params
+              reverse=False, llsim=0, ulsim=6000, sim_step=1.0,         #TODO: dynamic determination of start and end
+              llcyc=5500, ulcyc=6000, continuation=True, ex_bias=0.001):
     #Define initial values
     init=[np.sqrt(P),0,0]
     
@@ -147,9 +141,10 @@ def eta_sweep(setup, e_min, e_max, e_step, P, DELTA, b=4, T=1000,
     for n in range(e_size):
         bfdiag_points.append([])
     for n, eta in enumerate(e_values):
-        print('n is: {0}\r'.format(n), end='')
+        LAMBDA=eta
+        print('n is: {0}\r'.format(n), end='') #TODO: time remaining calc
         #Get the system of equations
-        funcs = setup(P, DELTA, b, eta, T)
+        funcs = setup(P, DELTA, alpha, LAMBDA, T)
         
         #Take a window into the relevant portion of the E-field trace
         y, t = simulate_functions(init, funcs, llsim, ulsim, step=sim_step)
@@ -160,9 +155,7 @@ def eta_sweep(setup, e_min, e_max, e_step, P, DELTA, b=4, T=1000,
         #freqs[n] = freq_analysis_trace(f_out, times, 0)
         
         #Find all local minima and maxima and add them to the bifurcation diagrm
-        #bfdiag_points[n] += list(f_out[find_peaks(f_out)[0]][:4])
-        #bfdiag_points[n] += list(f_out[find_peaks(-f_out)[0]][:4])
-        bfdiag_points[n] = get_extrema(f_out, 0.000001)
+        bfdiag_points[n] = get_extrema(f_out, ex_bias)
     print('\nEta sweep complete')
     return e_values, bfdiag_points, freqs
  
