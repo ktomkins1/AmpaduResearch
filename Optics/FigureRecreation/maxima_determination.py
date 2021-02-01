@@ -29,8 +29,9 @@ def group_values(y, bias):
 def get_extrema(trace, bias):
     tr_peaks_only = list(trace[find_peaks(trace)[0]])
     tr_peaks_only += list(trace[find_peaks(-trace)[0]])
-    groups = group_values(tr_peaks_only, bias)
-    vals = []
-    for gr in groups: vals.append(np.mean(gr))
-    return vals
-    
+    if len(tr_peaks_only) >= 1:
+        groups = group_values(tr_peaks_only, bias)
+        vals = []
+        for gr in groups: vals.append(np.mean(gr))
+        return vals
+    return [np.mean(trace)]

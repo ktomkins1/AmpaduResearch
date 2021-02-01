@@ -7,8 +7,8 @@ from sympy import sin,cos
     
     Single Mode Rate Equations:
     dE/dt   = N*E + eta*cos(psi)
-    dpsi/dt = DELTA - b*N - eta*sin(psi)/E
-    dN/dt   = [P - N - P*(1 + 2*N)*(E**2)]/T
+    dpsi/dt = -DELTA + b*N - eta*sin(psi)/E
+    dN/dt   = [P - N - (1 + 2*N)*(E**2)]/T
     
     parameters:
     P - Pumping rate
@@ -21,8 +21,8 @@ def setup(P, DELTA, b, eta, T):
     #Define variables and expressions
     E, psi, N = sp.var('E, psi, N')
     exp1 = E*N + eta*cos(psi)
-    exp2 = DELTA - b*N - eta*sin(psi)/E
-    exp3 = (P - N - P*(1 + 2*N)*(E**2))/T
+    exp2 = -DELTA + b*N - eta*sin(psi)/E
+    exp3 = (P - N - (1 + 2*N)*(E**2))/T
 
     symbols = [E, psi, N]
 
@@ -34,4 +34,4 @@ def setup(P, DELTA, b, eta, T):
     return funcs
     
 def get_names():
-    return ['E', 'psi', 'N']
+    return ['R', 'psi', 'N']

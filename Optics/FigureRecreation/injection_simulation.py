@@ -162,7 +162,7 @@ def eta_sweep(setup, e_min, e_max, e_step, P, DELTA, b=4, T=1000,
         #Find all local minima and maxima and add them to the bifurcation diagrm
         #bfdiag_points[n] += list(f_out[find_peaks(f_out)[0]][:4])
         #bfdiag_points[n] += list(f_out[find_peaks(-f_out)[0]][:4])
-        bfdiag_points[n] = get_extrema(f_out, 0.001)
+        bfdiag_points[n] = get_extrema(f_out, 0.000001)
     print('\nEta sweep complete')
     return e_values, bfdiag_points, freqs
  
