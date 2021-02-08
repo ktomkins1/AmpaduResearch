@@ -23,7 +23,7 @@ config = {
     'eta':{'linspace':(0.0, 0.014, 10)},   #the coupling constant
     'P':[1.0, 2.0, 5.0, 9.0],   #the excess pumping rate
     'DELTA':0.0,                #the cavity optical detuning
-    'T':958.0,                 #carrier lifetime to photon lifetime  [typ 10^3]
+    'T':958.0,                  #carrier lifetime to photon lifetime  [typ 10^3]
     'tau_p':0.002,              #the photon lifetime    [typ 2x10^-3 ns]
     'tau_c':2.0,                #the carrier lifetime    [typ 2 ns]
 
@@ -44,17 +44,19 @@ config = {
     'ex_bias':0.001,        #the sensitivity of grouping extremas
 
     #parameters for plotting
-    'bf_absv':False,           #plot the absolute value of the bf points
-    'bf_fit_line':True,         #plot line of best fit
-    'vis_show':False,
+    'bf_absv':False,            #plot the absolute value of the bf points
+    'bf_fit_line':False,        #plot line of best fit
+    'vis_show':False,           #show the plot using plt runtime. DNU with MT
     'vis_save':True
 }
 
-optional_params = ['desc', 'enc', 'root_dir']
+optional_params = ['desc', 'enc', 'root_dir', 'gamma_r', 'omega_r',
+                   'eta_FH', 'eta_RH']
 required_params = ['E_0','theta_0','N_0','alpha','eta','P','DELTA','T',
                    'tau_p','tau_c','model','model_shortname','bf_reverse',
                    'bf_continuation','llsim','ulsim','sim_step','llcyc',
-                   'ulcyc','ex_bias','bf_absv','bf_fit_line','vis_show']
+                   'ulcyc','ex_bias','bf_absv','bf_fit_line',
+                   'vis_save','vis_show']
 known_str_params = ['desc', 'enc', 'root_dir', 'model', 'model_shortname']
 
 def create_short_desc(c, sep='-'):
@@ -76,6 +78,9 @@ def encode_config_hash(c):
 #    return bytes.hex(lzma.compress(pickle.dumps(c)))
 
 def fix_config(c):
+    for k in required_params:
+        if k not in c.keys(): 
+            print('Configuration Malformed. missing: {}'.format(k))
     c['desc'] = create_short_desc(c)
     c['enc'] = encode_config_hash(c)
 
@@ -85,7 +90,7 @@ def create_config(E_0='lambda P: np.sqrt(P)', theta_0=0.0, N_0=0.0, alpha=4.0,
                   model_shortname='PhyRev1996', bf_reverse=False,
                   bf_continuation=True, llsim=0, ulsim=6000, sim_step=1.0,
                   llcyc=5500, ulcyc=6000, ex_bias=0.001, bf_absv=False,
-                  bf_fit_line=True):
+                  bf_fit_line=True, vis_save=True, vis_show=False):
     config = locals()
     fix_config(config)
     return config

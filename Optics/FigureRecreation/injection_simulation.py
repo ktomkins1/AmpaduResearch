@@ -229,4 +229,40 @@ def general_sweep(setup, c, sweep_key, sweep_space, axis_gen=np.linspace):
         bfdiag_points[n] = get_extrema(f_out, c['ex_bias'])
     print('Sweep of var {0} complete'.format(sweep_key))
     return sweep_values, bfdiag_points, freqs
+
+def get_FRDPs(c):
+    alpha, P, T = c['alpha'], c['P'], c['T']
+    gamma_r = (1 + 2*P)/(2*T)
+    omega_r = np.sqrt(complex((2*P/T) - gamma_r**2))
+    c['gamma_r'] = gamma_r
+    c['omega_r'] = omega_r
+    return gamma_r, omega_r
+
+def get_fwd_rev_hopf(c, gamma_r, omega_r):
+    alpha, P, T = c['alpha'], c['P'], c['T']
+    eta_FH = 2*gamma_r*(np.sqrt(alpha**2 + 1)/(alpha**2 - 1))
+    eta_RH = omega_r*np.sqrt(complex((alpha**2 - 1)/2))
+    c['eta_FH'] = eta_FH
+    c['eta_RH'] = eta_RH
+    return eta_FH, eta_RH
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
