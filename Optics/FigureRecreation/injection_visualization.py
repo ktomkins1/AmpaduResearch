@@ -88,7 +88,7 @@ def plot_bif_diag(values, bfdiag_points, value_name, config,
     for n, v in enumerate(values):
         #if n < skipfrom: continue
         for pt in bfdiag_points[n]:
-            if config['absv']: pt = np.abs(pt)
+            if config['bf_absv']: pt = np.abs(pt)
             try:
                 ax.scatter(v, pt, s=1, c=our_color)
             except Exception as e:
@@ -126,3 +126,8 @@ def plot_waterfall(e_values, freqs):
     ax.set_xticks(e_values)
     ax.set_xlabel('Eta')
     return plt.show
+
+if __name__ == '__main__':
+    #TODO: open a pickled data_set to plot
+    pass
+    
