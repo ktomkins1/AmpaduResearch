@@ -10,31 +10,48 @@ import os
 import sys
 import argparse
 from matplotlib import pyplot as plt
+from threading import Thread
 
 #import model here
 #TODO: dynamically import from config
 import model_phys_review_1996 as model
 
 def dispatch(setup, config):
-    cc.fix_config(config)
+    clean_config(config) #finalize config after splitting into multiple dicts
     if config['bf']:
-        #run sweep
+        #get key for sweeping
         skey = [s for s in config.keys() if type(config[s]) is dict][0]
+        sweep = dict(config[skey]) #copying should not matter, but well whatever
+        #get method of enumeration
         rn = np.linspace
-        if config[skey].keys()[0] == 'arange':
+        if list(sweep.keys())[0] == 'arange':
             rn = np.arange
         
         #TODO: use calculations to determine the critical points of interest
-        results = sim.general_sweep(setup, config, skey, 
-                                    config[skey].values()[0], rn)
+        sweep_params = list(sweep.values())[0]
+        results = sim.general_sweep(setup, config, skey, sweep_params, rn)
+        config[skey] = sweep #set our config back to original value
     else:
         results = sim.trace(setup, config)
     
+    #create new directory for storing these results
+    targetdir = os.path.join(config['root_dir'], config['desc'])
+    os.makedirs(targetdir, exist_ok=True)
+    
+    #copy results into the new directory
+    with open(os.path.join(targetdir, 'results.pickle'), 'wb+') as f:
+        pickle.dump(results, f)
+    try:
+        with open(os.path.join(targetdir, 'config.json'), 'w+') as f:
+            json.dump(config, f)
+    except Exception as e:
+        print(e)
+    
     #save images of results
-    plot_image(results, config)
+    plot_image(results, config, targetdir)
 
-def plot_image(results, config): #for easy access based on a config
-    pass
+def plot_image(results, config, targetdir): #for easy access based on a config
+    vis.plot_bif_diag(results[0], results[1], 'eta', config)()
 
 def run_and_compare_sweeps(): #for easy comparison on same plot
     #this will need to be based on settings because many/most times bifurcation
@@ -54,7 +71,8 @@ def save_bifurcation_data(rdir, config, axis, data):
 
 def enumerate_configs(c):
     c['bf'] = False
-    elist, ekey, clist = None, None, None
+    elist, ekey = None, None
+    clist = []
     
     #check each item in config c and see if c is a sweep
     #check for enumerator
@@ -66,13 +84,20 @@ def enumerate_configs(c):
             c['bf'] = True
     
     if elist == None:
-        clist = [c]
+        clist.append(c)
     else:
         for item in elist:
             d = c.copy()
             d[ekey] = item
             clist.append(d)
     return clist, elist, ekey
+
+def clean_config(c):
+    for k in c.keys():
+        if k in cc.known_str_params: continue
+        if type(c[k]) == type(''):
+            exec('c[\'{0}\']='.format(k) + c[k])
+    cc.fix_config(c)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -102,11 +127,19 @@ if __name__ == '__main__':
     #create folder under results
     results_dirname = os.path.join('results', config['desc'])
     os.makedirs(results_dirname, exist_ok=True)
-
-    clist = enumerate_configs(config)
+    #add the config to the results to make them reproducible
+    with open(os.path.join(results_dirname, args.cfilename), 'w') as f:
+        json.dump(config, f)
+    #save this dir for future use
+    config['root_dir'] = str(os.path.abspath(results_dirname))
+    
+    clist, elist, e = enumerate_configs(config)
+    print('processing simulations for {} in {}'.format(e, elist))
     
     #dispatch all threads
-    threads = [Thread(target=dispatch, args=(model.setup, c) for c in clist]
+    threads = [Thread(target=dispatch, args=(model.setup, c)) for c in clist]
     for t in threads: t.start()
     for t in threads: t.join()
+    
+    print("Done :)")
 

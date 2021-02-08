@@ -190,11 +190,12 @@ def eta_sweep(setup, e_min, e_max, e_step, P, DELTA, alpha=4, T=1000,       #TOD
     returns: a list of lists of points for each value on the axis
     returns: a numpy array of frequencies which occurred at each point
 '''
-def general_sweep(setup, c, sweep_key, sweep_space, axis_gen=np.linspace)
+def general_sweep(setup, c, sweep_key, sweep_space, axis_gen=np.linspace):
     #Define initial values
     init=[c['E_0'],c['theta_0'],c['N_0']] #must be prepared
     
     #The Eta axis
+    print('Sweep space is {}'.format(sweep_space))
     sweep_values = axis_gen(*sweep_space)
     if c['bf_reverse']: sweep_values = np.flip(sweep_values)
     sweep_size = sweep_values.size
@@ -211,7 +212,7 @@ def general_sweep(setup, c, sweep_key, sweep_space, axis_gen=np.linspace)
         bfdiag_points.append([])
     for n, val in enumerate(sweep_values):
         c[sweep_key] = val
-        print('n is: {0}\r'.format(n), end='') #TODO: time remaining calc
+        #print('n is: {0}\r'.format(n), end='') #TODO: time remaining calc
         #Get the system of equations
         funcs = setup(c['P'], c['DELTA'], c['alpha'], c['eta'], c['T'])
         

@@ -12,16 +12,18 @@ from hashlib import blake2b
 #list option should be less than 8 options
 #string option will be executed by exec and must be a statement which will be
 #   prepended with config[<key name>]=
+#string options should use c[<key>] if wanting to refer to variable <key>
+#   for example, if refering to P in order to create E_0, use c[P]
 config = {
     #parameters of the system
-    'E_0':'np.sqrt(P)',  #initial e-field
+    'E_0':'np.sqrt(c[\'P\'])',  #initial e-field
     'theta_0':0.0,              #initial phase difference
     'N_0':0.0,                  #initial carrier density
-    'alpha':4.0,                #the line-width enhancement factor    [typ 4]
-    'eta':{'linspace':(0.0, 0.014, 500)},   #the coupling constant
+    'alpha':4.8,                #the line-width enhancement factor    [typ 4]
+    'eta':{'linspace':(0.0, 0.014, 10)},   #the coupling constant
     'P':[1.0, 2.0, 5.0, 9.0],   #the excess pumping rate
     'DELTA':0.0,                #the cavity optical detuning
-    'T':1000.0,                 #carrier lifetime to photon lifetime  [typ 10^3]
+    'T':958.0,                 #carrier lifetime to photon lifetime  [typ 10^3]
     'tau_p':0.002,              #the photon lifetime    [typ 2x10^-3 ns]
     'tau_c':2.0,                #the carrier lifetime    [typ 2 ns]
 
@@ -44,8 +46,15 @@ config = {
     #parameters for plotting
     'bf_absv':False,           #plot the absolute value of the bf points
     'bf_fit_line':True,         #plot line of best fit
-    'vis_save':False
+    'vis_show':False
 }
+
+optional_params = ['desc', 'enc', 'root_dir']
+required_params = ['E_0','theta_0','N_0','alpha','eta','P','DELTA','T',
+                   'tau_p','tau_c','model','model_shortname','bf_reverse',
+                   'bf_continuation','llsim','ulsim','sim_step','llcyc',
+                   'ulcyc','ex_bias','bf_absv','bf_fit_line','vis_show']
+known_str_params = ['desc', 'enc', 'root_dir', 'model', 'model_shortname']
 
 def create_short_desc(c, sep='-'):
     desc = c['model_shortname']
@@ -57,10 +66,10 @@ def create_short_desc(c, sep='-'):
     r, cnt = c['bf_reverse'], c['bf_continuation']
     if r or cnt:
         desc += sep + r*'r' + cnt*'c'
-    return desc
+    return desc.replace(' ', '').replace('.', '_')
 
 def encode_config_hash(c):
-    h = blake2b(digest_size=8)
+    h = blake2b(digest_size=10)
     h.update(lzma.compress(pickle.dumps(c)))
     return h.hexdigest()
 #    return bytes.hex(lzma.compress(pickle.dumps(c)))
