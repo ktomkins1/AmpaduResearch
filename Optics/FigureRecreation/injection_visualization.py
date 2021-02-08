@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
+import matplotlib.figure as figmod
 import numpy as np
+import os
 
 '''
     Create a plot for each of the associated traces in a list
@@ -61,29 +63,21 @@ def plot_limit_cycle(trace1, trace2, name1, name2):
     returns fig, ax if get_fig
     returns plt.show if get_plot and also not get_fig
 '''
-def plot_bif_diag(values, bfdiag_points, value_name, config,
+def plot_bif_diag(values, bfdiag_points, value_name, config, save_loc,
                   override_fig=None, override_ax=None,
-                  our_color='k', get_fig=False, get_plot=True):
+                  our_color='k', get_fig=False):
     if type(override_fig) is type(None) and type(override_ax) is type(None):
-        fig, ax = plt.subplots()
-        fig.suptitle("Bifurcation analysis of {0} from {1} to {2}".format(
+        fig = figmod.Figure(figsize=(15.0, 10.0), dpi=500)
+        ax = fig.add_axes([0.05, 0.075, 0.9, 0.85])
+        fig.suptitle("Bifurcation analysis of {0} from {1} to {2}\n".format(
                         value_name,
                         round(values[0], 4),
-                        round(values[-1], 4)))
-
-        ax.plot(values, get_fit(values, bfdiag_points), '--')
+                        round(values[-1], 4)) + get_param_description(config))
+        
     else:
         fig = override_fig
         ax = override_ax
-
-#    skipfrom = None
-#    for n, eta in enumerate(e_values):
-#        if eta >= 0.0093:
-#            skipfrom=n
-#            break
-#
-#    for t in convert_bf_to_traces(bfdiag_points):
-#        ax.plot(e_values[0:skipfrom], t[0:skipfrom], ':', c=our_color)
+        #TODO: since plotted after a different bfd, add a key to the figure
 
     for n, v in enumerate(values):
         #if n < skipfrom: continue
@@ -97,10 +91,12 @@ def plot_bif_diag(values, bfdiag_points, value_name, config,
     ax.set_xlabel(value_name)
     ax.set_ylabel('Amplitude Extrema')
 
-    if config['vis_save']: pass #TODO: save visualization
+    if config['vis_save']:
+        fname = os.path.join(save_loc, 'result_figure.png')
+        fig.savefig(fname, dpi=500)
     if get_fig:
         return fig, ax
-    if get_plot:
+    if config['vis_show']:
         return plt.show
 
 def get_fit(axis, bfdiag_points):
@@ -126,6 +122,14 @@ def plot_waterfall(e_values, freqs):
     ax.set_xticks(e_values)
     ax.set_xlabel('Eta')
     return plt.show
+
+def get_param_description(c):
+    desc = ''
+    desc += 'Pumping:' + str(c['P'])
+    desc += ' Linewidth:' + str(c['alpha'])
+    desc += ' T:' + str(c['T'])
+    desc += ' Detuning:' + str(c['DELTA'])
+    return desc
 
 if __name__ == '__main__':
     #TODO: open a pickled data_set to plot

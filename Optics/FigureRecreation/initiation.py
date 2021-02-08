@@ -20,7 +20,7 @@ def dispatch(setup, config):
     clean_config(config) #finalize config after splitting into multiple dicts
     if config['bf']:
         #get key for sweeping
-        skey = [s for s in config.keys() if type(config[s]) is dict][0]
+        skey = detect_sweep_key(config)
         sweep = dict(config[skey]) #copying should not matter, but well whatever
         #get method of enumeration
         rn = np.linspace
@@ -51,7 +51,11 @@ def dispatch(setup, config):
     plot_image(results, config, targetdir)
 
 def plot_image(results, config, targetdir): #for easy access based on a config
-    vis.plot_bif_diag(results[0], results[1], 'eta', config)()
+    try:
+        skey = detect_sweep_key(config)
+        vis.plot_bif_diag(results[0], results[1], skey, config, targetdir)
+    except IndexError as ie:
+        print('Saving plot for single trace not yet implemented.')
 
 def run_and_compare_sweeps(): #for easy comparison on same plot
     #this will need to be based on settings because many/most times bifurcation
@@ -98,6 +102,9 @@ def clean_config(c):
         if type(c[k]) == type(''):
             exec('c[\'{0}\']='.format(k) + c[k])
     cc.fix_config(c)
+
+def detect_sweep_key(c):
+    return [s for s in config.keys() if type(config[s]) is dict][0]
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

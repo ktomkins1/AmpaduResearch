@@ -46,7 +46,8 @@ config = {
     #parameters for plotting
     'bf_absv':False,           #plot the absolute value of the bf points
     'bf_fit_line':True,         #plot line of best fit
-    'vis_show':False
+    'vis_show':False,
+    'vis_save':True
 }
 
 optional_params = ['desc', 'enc', 'root_dir']
