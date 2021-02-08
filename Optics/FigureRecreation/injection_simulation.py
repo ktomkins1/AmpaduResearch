@@ -159,20 +159,69 @@ def eta_sweep(setup, e_min, e_max, e_step, P, DELTA, alpha=4, T=1000,       #TOD
     print('\nEta sweep complete')
     return e_values, bfdiag_points, freqs
  
-def convert_bf_to_traces(bfdiag_points):
-    #convert bfdiag scatter points to traces
-    bfdiag_traces = []
-    for n in range(len(bfdiag_points[0])):
-        trace = []
-        for m in range(len(bfdiag_points)):
-            try:
-                trace.append(bfdiag_points[m][n])
-            except Exception as e:
-                print(e)
-                trace.append(0.0)
-        bfdiag_traces.append(np.array(trace))
-    return bfdiag_traces
-    
+#def convert_bf_to_traces(bfdiag_points):  TODO: create a fn for more efficient plotting
+#    #convert bfdiag scatter points to traces
+#    bfdiag_traces = []
+#    for n in range(len(bfdiag_points[0])):
+#        trace = []
+#        for m in range(len(bfdiag_points)):
+#            try:
+#                trace.append(bfdiag_points[m][n])
+#            except Exception as e:
+#                print(e)
+#                trace.append(0.0)
+#        bfdiag_traces.append(np.array(trace))
+#    return bfdiag_traces
 
+'''
+    Perform a sweep of any value
     
+    param setup: the callback to the setup which creates our model's fns
+    param c:     the config dictionary
+    param sweep_key: the key in the dictionary which is the value being swept
+    param sweep_space: aruments to create the axis
+    param axis_gen: the callback to function to create the axis
+    
+    returns: the axis created for sweeping
+    returns: a list of lists of points for each value on the axis
+    returns: a numpy array of frequencies which occurred at each point
+'''
+def general_sweep(setup, c, sweep_key, sweep_space, axis_gen=np.linspace)
+    #Define initial values
+    init=[np.sqrt(c['P']),0,0] #TODO: change so that the lambda for E_0 is used
+    
+    #The Eta axis
+    sweep_values = axis_gen(*sweep_space)
+    if c['bf_reverse']: sweep_values = np.flip(sweep_values)
+    sweep_size = sweep_values.size
+    print('Performing {0} simulations...'.format(sweep_size))
+    
+    #The empty bfdiag:
+    bfdiag_points = []
+    
+    #The empty frequency heatmap
+    freqs = np.zeros((sweep_size, c['ulcyc']-c['llcyc']))
+    
+    f_out = None
+    for n in range(sweep_size):
+        bfdiag_points.append([])
+    for n, val in enumerate(sweep_values):
+        c[sweep_key] = val
+        print('n is: {0}\r'.format(n), end='') #TODO: time remaining calc
+        #Get the system of equations
+        funcs = setup(c['P'], c['DELTA'], c['alpha'], c['eta'], c['T'])
+        
+        #Take a window into the relevant portion of the E-field trace
+        y, t = simulate_functions(init, funcs, c['llsim'], c['ulsim'], 
+                                  step=c['sim_step'])
+        f_out = y[0][c['llcyc']:c['ulcyc']]
+        if c['bf_continuation']: init = [i[-1] for i in y]
+        
+        #Perform frequency analysis on that window
+        #freqs[n] = freq_analysis_trace(f_out, times, 0)
+        
+        #Find all local minima and maxima and add them to the bifurcation diagrm
+        bfdiag_points[n] = get_extrema(f_out, c['ex_bias'])
+    print('\nSweep of var {0} complete'.format(sweep_key))
+    return sweep_values, bfdiag_points, freqs
     

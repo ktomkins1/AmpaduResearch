@@ -9,6 +9,7 @@ import io
 import os
 import sys
 import argparse
+from matplotlib import pyplot as plt
 
 #import model here
 #TODO: dynamically import from config
@@ -25,7 +26,7 @@ def save_single_sim_traces(config, time_axis, data):
 
 def save_bifurcation_data(rdir, config, axis, data):
     our_obj = {'axis':axis, 'data':data}
-    filepath = os.path.join(rdir,'bf_results_{}'.format(config['desc'])+'.pickle')
+    filepath = os.path.join(rdir,'bf_results_{}'.format(config['enc'])+'.pickle')
     with open(filepath, 'wb+') as fp:
         print('Saving data to disk....', end='')
         pickle.dump(our_obj, fp)
@@ -56,32 +57,59 @@ if __name__ == '__main__':
     with open(args.cfilename, 'r') as fp:
         config = json.load(fp)
 
-    #if encoding is empty, create new encoding
-    if 'enc' not in config.keys():
-        config['enc'] = cc.encode_config_hash(config)
-        config['desc'] = cc.create_short_desc(config)
+    #ensure encoding and description are correct
+    config['enc'] = cc.encode_config_hash(config)
+    config['desc'] = cc.create_short_desc(config)
 
     #create folder under results
     results_dirname = os.path.join('results', config['desc'])
     os.makedirs(results_dirname, exist_ok=True)
     
+    #find values to sweep and to display simulataneously
+    bf_active = False #is this a single run or bifurcation sweep?
+    comp_active = False #is there a value which we are comparing the keys
+    skey, ckey = None, None
+    bf_axis_arg = None
+    comp_list = None
+    for k in config.keys():
+        tp = type(config[k])
+        if tp == type({}):
+            skey = k
+            bf_active = True
+            bf_axis_arg = config[k]['sweep']
+        if tp == type([]):
+            ckey = k
+            comp_active = True
+            comp_list = c[k]
+    
     #call simulation(s)
-    eta_start = 0.0
-    eta_end = 0.014
-    d_eta = 0.0005
-    vals, bf, fs = sim.eta_sweep(model.setup, eta_start, eta_end, d_eta, 
-                                 config['P'], config['DELTA'], T=config['T'],
-                                 llsim=config['llsim'], ulsim=config['ulsim'],
-                                 llcyc=config['llcyc'], ulcyc=config['ulcyc'])
+    #TODO: This will need to be cleaned up
+    results = []
+    if comp_active:
+        for cval in comp_list:
+            config[ckey] = cval
+            if bf_active:
+                results.append(sim.general_sweep(model.setup, config, skey, bf_axis_arg))
+            else:
+                results.append(sim.single_sim(model.setup, config))
+    elif bf_active:
+        results.append(sim.general_sweep(model.setup, config, skey, bf_axis_arg))
+    else:
+        results.append(sim.single_sim(model.setup, config))
 
+    fig, ax = plt.subplots()
+    fig.suptitle('Variable sweep of {0}.  Other params: T={1}, alpha={2}, Zero Detuning'.format(skey, config['T'], config['alpha'])
+    for n, color in enumerate(['k', 'r', 'b', 'g']):
+        
     #call visualization(s)
-    #show = vis.plot_n_traces([ys[0], ys[2]], t, ["E1","N1"], "Electric Field for eta={0}, sim@6000,5700:5999".format(eta))
-    show = vis.plot_bif_diag(vals, bf, 'Eta', config)
-    show()
+    #show = vis.plot_bif_diag(vals, bf, 'Eta', config)
+    #show()
 
     #save data
-    save_bifurcation_data(results_dirname, config, vals, bf)
+    if bf_active:
+        for vals, bf, _ in results:
+            save_bifurcation_data(results_dirname, config, vals, bf)
 
     #save configuration
-    with open(results_dirname + '/config_' + config['desc'] + '.json', 'w+') as fp:
+    with open(results_dirname + '/config_' + config['enc'] + '.json', 'w+') as fp:
         json.dump(config, fp, indent=4)
