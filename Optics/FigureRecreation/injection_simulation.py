@@ -96,6 +96,10 @@ def trace_single_analysis(setup, init, P, DELTA, eta, b=4, T=1000, sim_step=1.0,
     
     return time_trace, traces, fft_trace
 
+#function eventually for getting a single trace
+def trace(setup, config):
+    pass
+
 '''
     Sweep through eta values, recording the min and max points in the resulting
     waveforms, as well as the frequency spectrum
@@ -188,7 +192,7 @@ def eta_sweep(setup, e_min, e_max, e_step, P, DELTA, alpha=4, T=1000,       #TOD
 '''
 def general_sweep(setup, c, sweep_key, sweep_space, axis_gen=np.linspace)
     #Define initial values
-    init=[np.sqrt(c['P']),0,0] #TODO: change so that the lambda for E_0 is used
+    init=[c['E_0'],c['theta_0'],c['N_0']] #must be prepared
     
     #The Eta axis
     sweep_values = axis_gen(*sweep_space)

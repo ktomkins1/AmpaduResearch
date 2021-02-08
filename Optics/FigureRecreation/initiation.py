@@ -15,10 +15,30 @@ from matplotlib import pyplot as plt
 #TODO: dynamically import from config
 import model_phys_review_1996 as model
 
-def run_and_plot_sweep(): #for easy access based on a config
+def dispatch(setup, config):
+    cc.fix_config(config)
+    if config['bf']:
+        #run sweep
+        skey = [s for s in config.keys() if type(config[s]) is dict][0]
+        rn = np.linspace
+        if config[skey].keys()[0] == 'arange':
+            rn = np.arange
+        
+        #TODO: use calculations to determine the critical points of interest
+        results = sim.general_sweep(setup, config, skey, 
+                                    config[skey].values()[0], rn)
+    else:
+        results = sim.trace(setup, config)
+    
+    #save images of results
+    plot_image(results, config)
+
+def plot_image(results, config): #for easy access based on a config
     pass
 
 def run_and_compare_sweeps(): #for easy comparison on same plot
+    #this will need to be based on settings because many/most times bifurcation
+    #   diagrams won't meaningfully fit on the same plot
     pass
 
 def save_single_sim_traces(config, time_axis, data):
@@ -31,6 +51,28 @@ def save_bifurcation_data(rdir, config, axis, data):
         print('Saving data to disk....', end='')
         pickle.dump(our_obj, fp)
         print('Done')
+
+def enumerate_configs(c):
+    c['bf'] = False
+    elist, ekey, clist = None, None, None
+    
+    #check each item in config c and see if c is a sweep
+    #check for enumerator
+    for k in c.keys():
+        if type(c[k]) == type([]):
+            elist = c[k]
+            ekey = k
+        elif type(c[k]) == type({}):
+            c['bf'] = True
+    
+    if elist == None:
+        clist = [c]
+    else:
+        for item in elist:
+            d = c.copy()
+            d[ekey] = item
+            clist.append(d)
+    return clist, elist, ekey
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -57,59 +99,14 @@ if __name__ == '__main__':
     with open(args.cfilename, 'r') as fp:
         config = json.load(fp)
 
-    #ensure encoding and description are correct
-    config['enc'] = cc.encode_config_hash(config)
-    config['desc'] = cc.create_short_desc(config)
-
     #create folder under results
     results_dirname = os.path.join('results', config['desc'])
     os.makedirs(results_dirname, exist_ok=True)
+
+    clist = enumerate_configs(config)
     
-    #find values to sweep and to display simulataneously
-    bf_active = False #is this a single run or bifurcation sweep?
-    comp_active = False #is there a value which we are comparing the keys
-    skey, ckey = None, None
-    bf_axis_arg = None
-    comp_list = None
-    for k in config.keys():
-        tp = type(config[k])
-        if tp == type({}):
-            skey = k
-            bf_active = True
-            bf_axis_arg = config[k]['sweep']
-        if tp == type([]):
-            ckey = k
-            comp_active = True
-            comp_list = c[k]
-    
-    #call simulation(s)
-    #TODO: This will need to be cleaned up
-    results = []
-    if comp_active:
-        for cval in comp_list:
-            config[ckey] = cval
-            if bf_active:
-                results.append(sim.general_sweep(model.setup, config, skey, bf_axis_arg))
-            else:
-                results.append(sim.single_sim(model.setup, config))
-    elif bf_active:
-        results.append(sim.general_sweep(model.setup, config, skey, bf_axis_arg))
-    else:
-        results.append(sim.single_sim(model.setup, config))
+    #dispatch all threads
+    threads = [Thread(target=dispatch, args=(model.setup, c) for c in clist]
+    for t in threads: t.start()
+    for t in threads: t.join()
 
-    fig, ax = plt.subplots()
-    fig.suptitle('Variable sweep of {0}.  Other params: T={1}, alpha={2}, Zero Detuning'.format(skey, config['T'], config['alpha'])
-    for n, color in enumerate(['k', 'r', 'b', 'g']):
-        
-    #call visualization(s)
-    #show = vis.plot_bif_diag(vals, bf, 'Eta', config)
-    #show()
-
-    #save data
-    if bf_active:
-        for vals, bf, _ in results:
-            save_bifurcation_data(results_dirname, config, vals, bf)
-
-    #save configuration
-    with open(results_dirname + '/config_' + config['enc'] + '.json', 'w+') as fp:
-        json.dump(config, fp, indent=4)
