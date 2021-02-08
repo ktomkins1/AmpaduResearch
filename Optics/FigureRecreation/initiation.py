@@ -132,7 +132,8 @@ if __name__ == '__main__':
     config = None
     with open(args.cfilename, 'r') as fp:
         config = json.load(fp)
-
+    
+    config['desc'] = cc.create_short_desc(config)
     #create folder under results
     results_dirname = os.path.join('results', config['desc'])
     os.makedirs(results_dirname, exist_ok=True)
