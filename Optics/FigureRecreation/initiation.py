@@ -18,6 +18,8 @@ import model_phys_review_1996 as model
 
 def dispatch(setup, config):
     clean_config(config) #finalize config after splitting into multiple dicts
+    sim.get_FRDPs(config)
+    sim.get_fwd_rev_hopf(config)
     if config['bf']:
         #get key for sweeping
         skey = detect_sweep_key(config)

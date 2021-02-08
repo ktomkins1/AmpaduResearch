@@ -90,6 +90,18 @@ def plot_bif_diag(values, bfdiag_points, value_name, config, save_loc,
                 print('exception while plotting scatter point')
     ax.set_xlabel(value_name)
     ax.set_ylabel('Amplitude Extrema')
+    
+    #try to plot lines for the hopfs
+    try:
+        eta_FH = config['eta_FH']
+        if min(values) < eta_FH < max(values):
+            ax.axvline(eta_FH)
+        eta_RH = config['eta_RH']
+        if min(values) < eta_RH < max(values):
+            ax.axvline(eta_RH)
+    except Exception as e:
+        print('hopf rev and fwd not present')
+        
 
     if config['vis_save']:
         fname = os.path.join(save_loc, 'result_figure.png')

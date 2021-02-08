@@ -84,8 +84,8 @@ def fix_config(c):
     c['desc'] = create_short_desc(c)
     c['enc'] = encode_config_hash(c)
 
-def create_config(E_0='lambda P: np.sqrt(P)', theta_0=0.0, N_0=0.0, alpha=4.0,
-                  eta='sweep', P=0.375, DELTA=0.0, T=1000.0,
+def create_config(E_0='np.sqrt(c[\'P\'])', theta_0=0.0, N_0=0.0, alpha=4.8,
+                  eta=0.01, P=1.0, DELTA=0.0, T=958.0,
                   tau_p=0.002,  tau_c=2.0, model='model_phys_review_1996',
                   model_shortname='PhyRev1996', bf_reverse=False,
                   bf_continuation=True, llsim=0, ulsim=6000, sim_step=1.0,

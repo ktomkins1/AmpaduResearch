@@ -238,8 +238,12 @@ def get_FRDPs(c):
     c['omega_r'] = omega_r
     return gamma_r, omega_r
 
-def get_fwd_rev_hopf(c, gamma_r, omega_r):
+def get_fwd_rev_hopf(c, gamma_r=None, omega_r=None):
     alpha, P, T = c['alpha'], c['P'], c['T']
+    
+    if gamma_r == None: gamma_r = c['gamma_r']
+    if omega_r == None: omega_r = c['omega_r']
+    
     eta_FH = 2*gamma_r*(np.sqrt(alpha**2 + 1)/(alpha**2 - 1))
     eta_RH = omega_r*np.sqrt(complex((alpha**2 - 1)/2))
     c['eta_FH'] = eta_FH
