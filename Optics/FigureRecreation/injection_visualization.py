@@ -73,7 +73,7 @@ def plot_bif_diag(values, bfdiag_points, value_name, config, save_loc,
                         value_name,
                         round(values[0], 4),
                         round(values[-1], 4)) + get_param_description(config))
-        
+
     else:
         fig = override_fig
         ax = override_ax
@@ -90,7 +90,7 @@ def plot_bif_diag(values, bfdiag_points, value_name, config, save_loc,
                 print('exception while plotting scatter point')
     ax.set_xlabel(value_name)
     ax.set_ylabel('Amplitude Extrema')
-    
+
     #try to plot lines for the hopfs
     try:
         eta_FH = config['eta_FH']
@@ -100,11 +100,12 @@ def plot_bif_diag(values, bfdiag_points, value_name, config, save_loc,
         if min(values) < eta_RH < max(values):
             ax.axvline(eta_RH)
     except Exception as e:
-        print('hopf rev and fwd not present')
-        
+        print('hopf rev or fwd not present')
+
 
     if config['vis_save']:
-        fname = os.path.join(save_loc, 'result_figure.png')
+        fstring = 'result_figure{}.png'.format(config['bf_plot_id'])
+        fname = os.path.join(save_loc, fstring)
         fig.savefig(fname, dpi=500)
     if get_fig:
         return fig, ax
@@ -146,4 +147,3 @@ def get_param_description(c):
 if __name__ == '__main__':
     #TODO: open a pickled data_set to plot
     pass
-    
