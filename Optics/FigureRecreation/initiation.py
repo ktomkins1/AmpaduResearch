@@ -44,6 +44,11 @@ def dispatch(setup, config):
     fname = 'results{}.pickle'.format(config['bf_plot_id'])
     with open(os.path.join(targetdir, fname), 'wb+') as f:
         pickle.dump(results, f)
+
+    for k in config.keys():
+        val = config[k]
+        if type(val) is complex:
+            config[k] = str(val)
     try:
         with open(os.path.join(targetdir, 'config.json'), 'w+') as f:
             json.dump(config, f)
@@ -75,7 +80,7 @@ def enumerate_configs(c):
             c['bf'] = True
 
     if elist == None:
-        clist.append(c)
+        clist += split_config_by_plots(c)
     else:
         for item in elist:
             d = c.copy()
@@ -105,7 +110,7 @@ def split_config_by_plots(c):
     llim, ulim, dsweep = list(c[skey].values())[0]
 
     stype = list(c[skey].keys())[0]
-    if stype = 'linspace':
+    if stype == 'linspace':
         #convert to arange
         dsweep = (ulim-llim)/dsweep
         stype = 'arange'
@@ -117,10 +122,10 @@ def split_config_by_plots(c):
         d = c.copy()
         d[skey] = new_sweep
         d['bf_plot_id'] = i
-        out_list.append(d)
+        outlist.append(d)
         llim = factor + dsweep
 
-    return out_list
+    return outlist
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -158,7 +163,8 @@ if __name__ == '__main__':
     config['root_dir'] = str(os.path.abspath(results_dirname))
 
     clist, elist, e = enumerate_configs(config)
-    print('processing simulations for {} in {}'.format(e, elist))
+    if e != None:
+        print('processing simulations for {} in {}'.format(e, elist))
 
     #dispatch all threads
     threads = [Thread(target=dispatch, args=(model.setup, c)) for c in clist]

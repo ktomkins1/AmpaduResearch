@@ -5,9 +5,9 @@ from maxima_determination import get_extrema
 
 '''
     One single frame of integration
-    
+
     based on previous values, calculate next values of the system
-    
+
     parameters:
     t - the single time value
     y - the vectorized current state of the system [s1, s2, ... sn]
@@ -19,17 +19,17 @@ def int_step(t,y,funcs):
 
 '''
     Perform simulation of the system using the Initial Value Problem approach
-    
+
     Integrator uses Runge Kutta Method by default
-    
+
     parameters:
     initial values - initial vector of the system
     funcs - the functions above (F1...n)
     ll - the initial time
     ul - the ending time
     step (default 1.0) the maximum time step for the integrator to use
-    
-    returns 2-tuple: 
+
+    returns 2-tuple:
     0 - list of traces created [s1(t), s2(t), ... sn(t)]
     1 - the associated time steps
 '''
@@ -41,7 +41,7 @@ def simulate_functions(initial_values, funcs, ll, ul, step=1.0, tol=None):
 
 '''
     Perform frequency analysis on a single time series trace
-    
+
     parameters:
     trace - the time series to perform on
     time_trace - the time steps associated with each point
@@ -52,11 +52,11 @@ def freq_analysis_trace(trace, time_trace, dt):
 
 '''
     For a single trace, establish a baseline and subtract it out
-    
+
     This allows measuring the trace above 0 rather than a (moving) baseline
-    
+
     For now, uses boxcar method (moving avg)
-    
+
     parameters:
     trace - the time series
     width - the width of the boxcar. should be sufficient for the trace freqs
@@ -67,9 +67,9 @@ def normalize_trace(trace, width):
 
 '''
     Plot the analysis of a single set of input parameters
-    
+
     Simulates the system for a set type of initial conds and given input params
-    
+
     parameters:
     E_0 - the references E-field
     P - the pumping rate
@@ -86,14 +86,14 @@ def trace_single_analysis(setup, init, P, DELTA, eta, b=4, T=1000, sim_step=1.0,
                           llsim=0, ulsim=10000, llcyc=3000, ulcyc=5000):
     #Get the system of equations
     funcs = setup(P, DELTA, b, eta, T)
-    
+
     #simulate the system for bounds llsim and ulsim (lower and upper level)
     traces, time_trace = simulate_functions(init, funcs, llsim, ulsim, step=sim_step)
-    
+
     #normalize the electric field and perform a DFT on it
     norm_e = normalize_trace(traces[0], 100)
     fft_trace = freq_analysis_trace(norm_e, time_trace, 1.0)
-    
+
     return time_trace, traces, fft_trace
 
 #function eventually for getting a single trace
@@ -103,7 +103,7 @@ def trace(setup, config):
 '''
     Sweep through eta values, recording the min and max points in the resulting
     waveforms, as well as the frequency spectrum
-    
+
     parameters:
     e_min - starting eta value
     e_min - ending eta value
@@ -116,7 +116,7 @@ def trace(setup, config):
     ulsim - simulation ending point
     llcyc - for creating a window into traces, the lower bound
     ulcyc - for creating a window into traces, the upper bound
-    
+
     returns:
     e_values - the created axis (np array) of eta values
     bfdiag_points - the list of lists of peaks found for each eta
@@ -127,19 +127,19 @@ def eta_sweep(setup, e_min, e_max, e_step, P, DELTA, alpha=4, T=1000,       #TOD
               llcyc=5500, ulcyc=6000, continuation=True, ex_bias=0.001):
     #Define initial values
     init=[np.sqrt(P),0,0]
-    
+
     #The Eta axis
     e_values = np.arange(e_min, e_max, e_step)
     if reverse: e_values = np.flip(e_values)
     e_size = e_values.size
     print('Performing {0} simulations...'.format(e_size))
-    
+
     #The empty bfdiag:
     bfdiag_points = []
-    
+
     #The empty frequency heatmap
     freqs = np.zeros((e_size, ulcyc-llcyc))
-    
+
     f_out = None
     first_run = True
     for n in range(e_size):
@@ -149,20 +149,20 @@ def eta_sweep(setup, e_min, e_max, e_step, P, DELTA, alpha=4, T=1000,       #TOD
         print('n is: {0}\r'.format(n), end='') #TODO: time remaining calc
         #Get the system of equations
         funcs = setup(P, DELTA, alpha, LAMBDA, T)
-        
+
         #Take a window into the relevant portion of the E-field trace
         y, t = simulate_functions(init, funcs, llsim, ulsim, step=sim_step)
         f_out = y[0][llcyc:ulcyc]
         if continuation: init = [i[-1] for i in y]
-        
+
         #Perform frequency analysis on that window
         #freqs[n] = freq_analysis_trace(f_out, times, 0)
-        
+
         #Find all local minima and maxima and add them to the bifurcation diagrm
         bfdiag_points[n] = get_extrema(f_out, ex_bias)
     print('\nEta sweep complete')
     return e_values, bfdiag_points, freqs
- 
+
 #def convert_bf_to_traces(bfdiag_points):  TODO: create a fn for more efficient plotting
 #    #convert bfdiag scatter points to traces
 #    bfdiag_traces = []
@@ -179,13 +179,13 @@ def eta_sweep(setup, e_min, e_max, e_step, P, DELTA, alpha=4, T=1000,       #TOD
 
 '''
     Perform a sweep of any value
-    
+
     param setup: the callback to the setup which creates our model's fns
     param c:     the config dictionary
     param sweep_key: the key in the dictionary which is the value being swept
     param sweep_space: aruments to create the axis
     param axis_gen: the callback to function to create the axis
-    
+
     returns: the axis created for sweeping
     returns: a list of lists of points for each value on the axis
     returns: a numpy array of frequencies which occurred at each point
@@ -193,38 +193,39 @@ def eta_sweep(setup, e_min, e_max, e_step, P, DELTA, alpha=4, T=1000,       #TOD
 def general_sweep(setup, c, sweep_key, sweep_space, axis_gen=np.linspace):
     #Define initial values
     init=[c['E_0'],c['theta_0'],c['N_0']] #must be prepared
-    
+
     #The Eta axis
     print('Sweep space is {}'.format(sweep_space))
     sweep_values = axis_gen(*sweep_space)
     if c['bf_reverse']: sweep_values = np.flip(sweep_values)
     sweep_size = sweep_values.size
     print('Performing {0} simulations...'.format(sweep_size))
-    
+
     #The empty bfdiag:
     bfdiag_points = []
-    
+
     #The empty frequency heatmap
     freqs = np.zeros((sweep_size, c['ulcyc']-c['llcyc']))
-    
+
     f_out = None
     for n in range(sweep_size):
         bfdiag_points.append([])
     for n, val in enumerate(sweep_values):
         c[sweep_key] = val
-        #print('n is: {0}\r'.format(n), end='') #TODO: time remaining calc
+        if n > 0 and n % 20 == 0:
+            print('{}: n is {} out of {}'.format(c['bf_plot_id'],n,sweep_space))
         #Get the system of equations
         funcs = setup(c['P'], c['DELTA'], c['alpha'], c['eta'], c['T'])
-        
+
         #Take a window into the relevant portion of the E-field trace
-        y, t = simulate_functions(init, funcs, c['llsim'], c['ulsim'], 
+        y, t = simulate_functions(init, funcs, c['llsim'], c['ulsim'],
                                   step=c['sim_step'])
         f_out = y[0][c['llcyc']:c['ulcyc']]
         if c['bf_continuation']: init = [i[-1] for i in y]
-        
+
         #Perform frequency analysis on that window
         #freqs[n] = freq_analysis_trace(f_out, times, 0)
-        
+
         #Find all local minima and maxima and add them to the bifurcation diagrm
         bfdiag_points[n] = get_extrema(f_out, c['ex_bias'])
     print('Sweep of var {0} complete'.format(sweep_key))
@@ -240,33 +241,12 @@ def get_FRDPs(c):
 
 def get_fwd_rev_hopf(c, gamma_r=None, omega_r=None):
     alpha, P, T = c['alpha'], c['P'], c['T']
-    
+
     if gamma_r == None: gamma_r = c['gamma_r']
     if omega_r == None: omega_r = c['omega_r']
-    
+
     eta_FH = 2*gamma_r*(np.sqrt(alpha**2 + 1)/(alpha**2 - 1))
     eta_RH = omega_r*np.sqrt(complex((alpha**2 - 1)/2))
     c['eta_FH'] = eta_FH
     c['eta_RH'] = eta_RH
     return eta_FH, eta_RH
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    

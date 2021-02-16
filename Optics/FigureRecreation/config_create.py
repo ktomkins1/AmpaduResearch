@@ -84,7 +84,8 @@ def fix_config(c):
         if k not in c.keys():
             print('Configuration Malformed. missing: {}'.format(k))
     c['enc'] = encode_config_hash(c)
-    if c['bf_plot_num'] > 1 : continue
+    if c['bf_plot_num'] > 1 : return
+    c['bf_plot_id'] = 0
     c['desc'] = create_short_desc(c)
 
 def create_config(E_0='np.sqrt(c[\'P\'])', theta_0=0.0, N_0=0.0, alpha=4.8,
@@ -99,17 +100,14 @@ def create_config(E_0='np.sqrt(c[\'P\'])', theta_0=0.0, N_0=0.0, alpha=4.8,
     fix_config(config)
     return config
 
+def save_config(c, name='config.json'):
+    with open(name, 'w') as fp:
+        json.dump(c, fp, indent=4)
+
 if __name__ == '__main__':
     #TODO: offer interactive through command line
 
-    #serialize and create encoding
-    enc = encode_config_hash(config)[10:20] #hopefully different enough
-    #create description string
-    desc_short = create_short_desc(config)
-    #add string and encoding to object
-    config['enc'] = enc
-    config['desc'] = desc_short
+    fix_config(config)
 
     #save to json
-    with open("config.json", 'w') as fp:
-        json.dump(config, fp, indent=4)
+    save_config(config)
