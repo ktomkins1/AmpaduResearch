@@ -79,15 +79,17 @@ def plot_bif_diag(values, bfdiag_points, value_name, config, save_loc,
         ax = override_ax
         #TODO: since plotted after a different bfd, add a key to the figure
 
-    for n, v in enumerate(values):
-        #if n < skipfrom: continue
-        for pt in bfdiag_points[n]:
-            if config['bf_absv']: pt = np.abs(pt)
-            try:
-                ax.scatter(v, pt, s=1, c=our_color)
-            except Exception as e:
-                print(e)
-                print('exception while plotting scatter point')
+#    for n, v in enumerate(values):
+#        #if n < skipfrom: continue
+#        for pt in bfdiag_points[n]:
+#            if config['bf_absv']: pt = np.abs(pt)
+#            try:
+#                ax.scatter(v, pt, s=1, c=our_color)
+#            except Exception as e:
+#                print(e)
+#                print('exception while plotting scatter point')
+    axes, image = convert_bf_to_array(bfdiag_points)
+    ax.imshow()
     ax.set_xlabel(value_name)
     ax.set_ylabel('Amplitude Extrema')
 
@@ -111,6 +113,20 @@ def plot_bif_diag(values, bfdiag_points, value_name, config, save_loc,
         return fig, ax
     if config['vis_show']:
         return plt.show
+
+def convert_bf_to_array(bf, bias=0.0001):
+    #find largest and smallest points
+    #find resolution
+    #create new axis
+    largest = -np.inf
+    smallest = np.inf
+    for group in bf:
+        for pt in group:
+            if pt > largest: largest = pt
+            if pt < smallest: smallest = pt
+    resmap = {}
+    
+    
 
 def get_fit(axis, bfdiag_points):
     #take the first and last points on average
