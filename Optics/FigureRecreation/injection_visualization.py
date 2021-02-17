@@ -88,9 +88,20 @@ def plot_bif_diag(values, bfdiag_points, value_name, config, save_loc,
 #            except Exception as e:
 #                print(e)
 #                print('exception while plotting scatter point')
-    axes, image = convert_bf_to_array(bfdiag_points)
-    ax.imshow()
+    bf_range, image = convert_bf_to_array(bfdiag_points)
+
+    #ax.plot(
+    #TODO:plot something so that the axes are set up.
+
+    ax.imshow(image, cmap='binary', aspect='auto')
+    xticks = list(np.linspace(0, len(values)-1, 20, dtype=int))
+    ax.set_xticks(xticks)
+    ax.set_xticklabels(values[xticks])
     ax.set_xlabel(value_name)
+
+    yticks = list(np.linspace(0, len(bf_range)-1, 20, dtype=int))
+    ax.set_yticks(yticks)
+    ax.set_yticklabels(values[yticks])
     ax.set_ylabel('Amplitude Extrema')
 
     #try to plot lines for the hopfs
@@ -114,19 +125,36 @@ def plot_bif_diag(values, bfdiag_points, value_name, config, save_loc,
     if config['vis_show']:
         return plt.show
 
-def convert_bf_to_array(bf, bias=0.0001):
+def convert_bf_to_array(bf, rounding=2):
     #find largest and smallest points
-    #find resolution
-    #create new axis
-    largest = -np.inf
-    smallest = np.inf
-    for group in bf:
-        for pt in group:
-            if pt > largest: largest = pt
-            if pt < smallest: smallest = pt
-    resmap = {}
-    
-    
+    newarr = []
+    for gr in bf:
+        newarr += [round(i, rounding) for i in gr]
+
+    mini = min(newarr)
+    maxi = max(newarr)
+
+    #determing minimum distance between points
+    newarr = sorted(newarr)
+    min_dist = np.inf
+    for i in range(len(newarr)+1):
+        if i >= len(newarr): break
+        if i == 0: continue
+        dist = newarr[i] - newarr[i-1]
+        if 0 < dist < min_dist:
+            min_dist = dist
+
+    bf_range = np.arange(mini, maxi, min_dist)
+
+    our_image = np.zeros((len(bf_range), len(bf)))
+    for i, gr in enumerate(bf):
+        for pt in gr:
+            rinx = np.searchsorted(bf_range, pt)
+            if rinx > 0:
+                rinx -= 1
+            our_image[rinx, i] = 1.0
+
+    return bf_range, our_image
 
 def get_fit(axis, bfdiag_points):
     #take the first and last points on average

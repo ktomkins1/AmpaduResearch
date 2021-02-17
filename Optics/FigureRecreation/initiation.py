@@ -47,7 +47,7 @@ def dispatch(setup, config):
 
     for k in config.keys():
         val = config[k]
-        if type(val) is complex:
+        if type(val) in [complex, np.complex128]:
             config[k] = str(val)
     try:
         with open(os.path.join(targetdir, 'config.json'), 'w+') as f:
@@ -59,11 +59,12 @@ def dispatch(setup, config):
     plot_image(results, config, targetdir)
 
 def plot_image(results, config, targetdir): #for easy access based on a config
-    try:
-        skey = detect_sweep_key(config)
-        vis.plot_bif_diag(results[0], results[1], skey, config, targetdir)
-    except IndexError as ie:
-        print('Saving plot for single trace not yet implemented.')
+    #try:
+    skey = detect_sweep_key(config)
+    vis.plot_bif_diag(results[0], results[1], skey, config, targetdir)
+    #except IndexError as ie:
+    #    print('Saving plot for single trace not yet implemented.')
+    #    print(ie)
 
 def enumerate_configs(c):
     c['bf'] = False

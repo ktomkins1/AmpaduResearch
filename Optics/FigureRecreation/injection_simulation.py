@@ -213,7 +213,7 @@ def general_sweep(setup, c, sweep_key, sweep_space, axis_gen=np.linspace):
     for n, val in enumerate(sweep_values):
         c[sweep_key] = val
         if n > 0 and n % 20 == 0:
-            print('{}: n is {} out of {}'.format(c['bf_plot_id'],n,sweep_space))
+            print('{}: n is {} out of {}'.format(c['bf_plot_id'],n,sweep_size))
         #Get the system of equations
         funcs = setup(c['P'], c['DELTA'], c['alpha'], c['eta'], c['T'])
 
