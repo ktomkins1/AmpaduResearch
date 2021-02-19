@@ -64,45 +64,36 @@ def plot_limit_cycle(trace1, trace2, name1, name2):
     returns plt.show if get_plot and also not get_fig
 '''
 def plot_bif_diag(values, bfdiag_points, value_name, config, save_loc,
-                  override_fig=None, override_ax=None,
+                  bifurcations=[], override_fig=None, override_ax=None,
                   our_color='k', get_fig=False):
     if type(override_fig) is type(None) and type(override_ax) is type(None):
-        fig = figmod.Figure(figsize=(15.0, 10.0), dpi=500)
+        fig = figmod.Figure()#figsize=(15.0, 10.0))#, dpi=500)
         ax = fig.add_axes([0.05, 0.075, 0.9, 0.85])
         fig.suptitle("Bifurcation analysis of {0} from {1} to {2}\n".format(
                         value_name,
                         round(values[0], 4),
                         round(values[-1], 4)) + get_param_description(config))
-
-    else:
-        fig = override_fig
-        ax = override_ax
-        #TODO: since plotted after a different bfd, add a key to the figure
-
-#    for n, v in enumerate(values):
-#        #if n < skipfrom: continue
-#        for pt in bfdiag_points[n]:
-#            if config['bf_absv']: pt = np.abs(pt)
-#            try:
-#                ax.scatter(v, pt, s=1, c=our_color)
-#            except Exception as e:
-#                print(e)
-#                print('exception while plotting scatter point')
+    our_dpi = 500
     bf_range, image = convert_bf_to_array(bfdiag_points)
+    fig.set_size_inches(max([1+(len(values)/our_dpi), 15]),10)
+                        #max([1+(len(bf_range)/our_dpi), 10]))
 
-    #ax.plot(
-    #TODO:plot something so that the axes are set up.
+    ax.plot(values, np.ones_like(values)*max(bf_range))
+    ax.plot(values, np.ones_like(values)*min(bf_range))
 
     ax.imshow(image, cmap='binary', aspect='auto')
     xticks = list(np.linspace(0, len(values)-1, 20, dtype=int))
     ax.set_xticks(xticks)
-    ax.set_xticklabels(values[xticks])
+    ax.set_xticklabels(np.round(values[xticks],3))
     ax.set_xlabel(value_name)
 
     yticks = list(np.linspace(0, len(bf_range)-1, 20, dtype=int))
     ax.set_yticks(yticks)
-    ax.set_yticklabels(values[yticks])
+    ax.set_yticklabels(np.round(bf_range[yticks],3))
     ax.set_ylabel('Amplitude Extrema')
+
+    for bx, by in bifurcations:
+        ax.scatter(bx, by, color='r')
 
     #try to plot lines for the hopfs
     try:
@@ -119,13 +110,13 @@ def plot_bif_diag(values, bfdiag_points, value_name, config, save_loc,
     if config['vis_save']:
         fstring = 'result_figure{}.png'.format(config['bf_plot_id'])
         fname = os.path.join(save_loc, fstring)
-        fig.savefig(fname, dpi=500)
+        fig.savefig(fname, dpi=our_dpi)
     if get_fig:
         return fig, ax
     if config['vis_show']:
         return plt.show
 
-def convert_bf_to_array(bf, rounding=2):
+def convert_bf_to_array(bf, rounding=4):
     #find largest and smallest points
     newarr = []
     for gr in bf:
@@ -181,11 +172,17 @@ def plot_waterfall(e_values, freqs):
     return plt.show
 
 def get_param_description(c):
-    desc = ''
-    desc += 'Pumping:' + str(c['P'])
-    desc += ' Linewidth:' + str(c['alpha'])
-    desc += ' T:' + str(c['T'])
-    desc += ' Detuning:' + str(c['DELTA'])
+    print(type(c))
+    try:
+        desc = ''
+        desc += 'Pumping:' + str(c['P'])
+        desc += ' Linewidth:' + str(c['alpha'])
+        desc += ' T:' + str(c['T'])
+        desc += ' Detuning:' + str(c['DELTA'])
+    except Exception as e:
+        print(e)
+        desc='Oops yo'
+
     return desc
 
 if __name__ == '__main__':

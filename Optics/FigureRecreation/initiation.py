@@ -11,6 +11,7 @@ import sys
 import argparse
 from matplotlib import pyplot as plt
 from threading import Thread
+from multiprocessing import Process
 
 #import model here
 #TODO: dynamically import from config
@@ -20,6 +21,7 @@ def dispatch(setup, config):
     clean_config(config) #finalize config after splitting into multiple dicts
     sim.get_FRDPs(config)
     sim.get_fwd_rev_hopf(config)
+    results = {}
     if config['bf']:
         #get key for sweeping
         skey = detect_sweep_key(config)
@@ -31,7 +33,10 @@ def dispatch(setup, config):
 
         #TODO: use calculations to determine the critical points of interest
         sweep_params = list(sweep.values())[0]
-        results = sim.general_sweep(setup, config, skey, sweep_params, rn)
+        results['axis'], results['groups'], results['fr'] = sim.general_sweep(
+                setup, config, skey, sweep_params, rn
+            )
+        results['bifs']=sim.get_bifurcations_from_groups(results)
         config[skey] = sweep #set our config back to original value
     else:
         results = sim.trace(setup, config)
@@ -58,10 +63,17 @@ def dispatch(setup, config):
     #save images of results
     plot_image(results, config, targetdir)
 
+def dispatch_saved(fname, config):
+    with open(fname, 'rb') as f:
+        results = pickle.load(f)
+
+    targetdir = os.path.dirname(os.path.abspath(fname))
+    plot_image(results, config, targetdir)
+
 def plot_image(results, config, targetdir): #for easy access based on a config
     #try:
     skey = detect_sweep_key(config)
-    vis.plot_bif_diag(results[0], results[1], skey, config, targetdir)
+    vis.plot_bif_diag(results['axis'], results['groups'], skey, config, targetdir)
     #except IndexError as ie:
     #    print('Saving plot for single trace not yet implemented.')
     #    print(ie)
@@ -132,6 +144,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config_file', default='config.json',
                         help="The configuration file to load", dest='cfilename')
+    parser.add_argument('-r', '--results', default=None,
+                        help="The results file to load", dest='rfilename')
+    #TODO: put an argument to either show or save the plot
 
     args = parser.parse_args()
 
@@ -153,6 +168,10 @@ if __name__ == '__main__':
     with open(args.cfilename, 'r') as fp:
         config = json.load(fp)
 
+    if args.rfilename:
+        #either find a config based on the given results filename or by cfilen
+        dispatch_saved(args.rfilename, args.cfilename)
+
     config['desc'] = cc.create_short_desc(config)
     #create folder under results
     results_dirname = os.path.join('results', config['desc'])
@@ -168,7 +187,7 @@ if __name__ == '__main__':
         print('processing simulations for {} in {}'.format(e, elist))
 
     #dispatch all threads
-    threads = [Thread(target=dispatch, args=(model.setup, c)) for c in clist]
+    threads = [Process(target=dispatch, args=(model.setup, c)) for c in clist]
     for t in threads: t.start()
     for t in threads: t.join()
 

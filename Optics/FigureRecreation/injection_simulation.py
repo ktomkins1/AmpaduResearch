@@ -250,3 +250,6 @@ def get_fwd_rev_hopf(c, gamma_r=None, omega_r=None):
     c['eta_FH'] = eta_FH
     c['eta_RH'] = eta_RH
     return eta_FH, eta_RH
+
+def get_bifurcations_from_groups(results):
+    return []
