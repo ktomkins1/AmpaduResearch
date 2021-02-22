@@ -1,6 +1,8 @@
 import injection_simulation as sim
 import injection_visualization as vis
+import bifurcation_detection as bfd
 import config_create as cc
+
 import numpy as np
 import pickle #for archiving
 import json   #for configuration
@@ -9,18 +11,19 @@ import io
 import os
 import sys
 import argparse
+
 from matplotlib import pyplot as plt
-from threading import Thread
+#from threading import Thread
 from multiprocessing import Process
 
 #import model here
 #TODO: dynamically import from config
 import model_phys_review_1996 as model
 
-def dispatch(setup, config):
+def bf_dispatch(setup, config):
     clean_config(config) #finalize config after splitting into multiple dicts
-    sim.get_FRDPs(config)
-    sim.get_fwd_rev_hopf(config)
+    bfd.get_FRDPs(config)
+    bfd.get_fwd_rev_hopf(config)
     results = {}
     if config['bf']:
         #get key for sweeping
@@ -38,7 +41,8 @@ def dispatch(setup, config):
         results['axis'], results['groups'], results['fr'] = sim.general_sweep(
                 setup, config, skey, sweep_params, rn
             )
-        sim.get_bifurcations_from_groups(results)
+        if 'bf_cnb' in config.keys():
+            bfd.get_cnb_from_groups(results)
         config[skey] = sweep #set our config back to original value
     else:
         results = sim.trace(setup, config)
@@ -63,7 +67,7 @@ def dispatch(setup, config):
         print(e)
 
     #save images of results
-    plot_image(results, config, targetdir)
+    vis.plot_bif_diag(results, skey, config, targetdir)
 
 def dispatch_saved(fname, config):
     with open(fname, 'rb') as f:
@@ -71,14 +75,8 @@ def dispatch_saved(fname, config):
 
     targetdir = os.path.dirname(os.path.abspath(fname))
     plot_image(results, config, targetdir)
-
-def plot_image(results, config, targetdir): #for easy access based on a config
-    #try:
     skey = detect_sweep_key(config)
-    vis.plot_bif_diag(results['axis'], results['groups'], skey, config, targetdir)
-    #except IndexError as ie:
-    #    print('Saving plot for single trace not yet implemented.')
-    #    print(ie)
+    vis.plot_bif_diag(results, skey, config, targetdir)
 
 def enumerate_configs(c):
     c['bf'] = False
@@ -189,7 +187,7 @@ if __name__ == '__main__':
         print('processing simulations for {} in {}'.format(e, elist))
 
     #dispatch all threads
-    threads = [Process(target=dispatch, args=(model.setup, c)) for c in clist]
+    threads = [Process(target=bf_dispatch, args=(model.setup, c)) for c in clist]
     for t in threads: t.start()
     for t in threads: t.join()
 

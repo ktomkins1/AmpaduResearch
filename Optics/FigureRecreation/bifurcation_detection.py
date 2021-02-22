@@ -29,7 +29,7 @@ def get_cnb_from_groups(results, sens=0.001):
     for i, g in enumerate(results['groups']):
         # for each point in g, track it's trace and watch if there are bifurcations
         for pt in g: ourts.append_trace_near(axis[i], pt)
-    return ourts.report(axis)
+    results['character'], results['bifurcations'] = ourts.report(axis)
             
 class Traces:
     def __init__(self, sensitivity, dx):

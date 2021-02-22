@@ -63,9 +63,16 @@ def plot_limit_cycle(trace1, trace2, name1, name2):
     returns fig, ax if get_fig
     returns plt.show if get_plot and also not get_fig
 '''
-def plot_bif_diag(values, bfdiag_points, value_name, config, save_loc,
-                  bifurcations=[], override_fig=None, override_ax=None,
+def plot_bif_diag(results, value_name, config, save_loc, override_fig=None, override_ax=None,
                   our_color='k', get_fig=False):
+    xaxis = results['axis']
+    bfdiag_points = results['groups']
+    bifurcations = []
+    try:
+        bifurcations = results['bifurcations']
+    except KeyError:
+        pass
+    
     if type(override_fig) is type(None) and type(override_ax) is type(None):
         fig = figmod.Figure(figsize=(12, 9))
         ax = fig.add_axes([0.05, 0.075, 0.9, 0.85])
@@ -73,17 +80,18 @@ def plot_bif_diag(values, bfdiag_points, value_name, config, save_loc,
                         value_name,
                         round(values[0], 4),
                         round(values[-1], 4)) + get_param_description(config))
+    
+    #TODO: find these optimally
     our_dpi = 500
     xpix, ypix = 12*our_dpi, 9*our_dpi
     
     vis_type = 'scatter'
-    xaxis = values
     if 'vis_type' in config.keys():
         vis_type = config['vis_type']
     
     if vis_type != 'scatter':
         bf_range, image, xlen = convert_bf_to_array(bfdiag_points)
-        xaxis = np.linspace(min(values), max(values), xlen)
+        xaxis = np.linspace(min(xaxis), max(xaxis), xlen)
 
         ax.plot(xaxis, np.ones_like(xaxis)*max(bf_range))
         ax.plot(xaxis, np.ones_like(xaxis)*min(bf_range))
@@ -91,7 +99,7 @@ def plot_bif_diag(values, bfdiag_points, value_name, config, save_loc,
         ax.imshow(image, cmap='binary', aspect='auto', interpolation='none')
         #fig.figimage(image*255, xo=int(0.05*xpix), yo=int(0.075*ypix), cmap='binary')
     else:
-        for n, v in enumerate(values):
+        for n, v in enumerate(xaxis):
         #if n < skipfrom: continue
         for pt in bfdiag_points[n]:
             if config['bf_absv']: pt = np.abs(pt)
