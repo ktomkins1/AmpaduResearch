@@ -21,7 +21,7 @@ config = {
     'N_0':0.0,                  #initial carrier density
     'alpha':4.8,                #the line-width enhancement factor    [typ 4]
     'eta':{'linspace':(0.0, 0.014, 10)},   #the coupling constant
-    'P':[1.0, 2.0, 5.0, 9.0],   #the excess pumping rate
+    'P':9.3,   #the excess pumping rate
     'DELTA':0.0,                #the cavity optical detuning
     'T':958.0,                  #carrier lifetime to photon lifetime  [typ 10^3]
     'tau_p':0.002,              #the photon lifetime    [typ 2x10^-3 ns]

@@ -253,3 +253,12 @@ def get_fwd_rev_hopf(c, gamma_r=None, omega_r=None):
 
 def get_bifurcations_from_groups(results):
     return []
+    
+def get_exponential_axis(start, stop, num, base=np.e):
+    print('exp')
+    ax = np.linspace(start, stop, num)
+    mu = np.linspace(0, 1, num)
+    mu = np.exp(mu)
+    ax *= mu
+    return ax
+

@@ -28,8 +28,11 @@ def dispatch(setup, config):
         sweep = dict(config[skey]) #copying should not matter, but well whatever
         #get method of enumeration
         rn = np.linspace
-        if list(sweep.keys())[0] == 'arange':
+        mode = list(sweep.keys())[0]
+        if mode == 'arange':
             rn = np.arange
+        if mode == 'exp1':
+            rn = sim.get_exponential_axis
 
         #TODO: use calculations to determine the critical points of interest
         sweep_params = list(sweep.values())[0]
