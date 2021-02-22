@@ -48,12 +48,13 @@ config = {
     'bf_fit_line':False,        #plot line of best fit
     'vis_show':False,           #show the plot using plt runtime. DNU with MT
     'vis_save':True,            #save the plot as a picture
+    'vis_type':'scatter',
     'bf_plot_num': 1,           #how many plots to make for bf diagrams
     'bf_plot_id': 1             #which results of a multi-result plot is this?
 }
 
 optional_params = ['desc', 'enc', 'root_dir', 'gamma_r', 'omega_r',
-                   'eta_FH', 'eta_RH', 'bf_plot_id']
+                   'eta_FH', 'eta_RH', 'bf_plot_id', 'vis_type']
 required_params = ['E_0','theta_0','N_0','alpha','eta','P','DELTA','T',
                    'tau_p','tau_c','model','model_shortname','bf_reverse',
                    'bf_continuation','llsim','ulsim','sim_step','llcyc',
@@ -95,7 +96,7 @@ def create_config(E_0='np.sqrt(c[\'P\'])', theta_0=0.0, N_0=0.0, alpha=4.8,
                   bf_continuation=True, llsim=0, ulsim=6000, sim_step=1.0,
                   llcyc=5500, ulcyc=6000, ex_bias=0.001, bf_absv=False,
                   bf_fit_line=True, vis_save=True, vis_show=False,
-                  bf_plot_num=1):
+                  bf_plot_num=1, vis_type='scatter'):
     config = locals()
     fix_config(config)
     return config

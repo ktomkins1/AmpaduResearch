@@ -75,14 +75,27 @@ def plot_bif_diag(values, bfdiag_points, value_name, config, save_loc,
                         round(values[-1], 4)) + get_param_description(config))
     our_dpi = 500
     xpix, ypix = 12*our_dpi, 9*our_dpi
-    bf_range, image, xlen = convert_bf_to_array(bfdiag_points)
-    xaxis = np.linspace(min(values), max(values), xlen)
+    
+    vis_type = 'scatter'
+    xaxis = values
+    if 'vis_type' in config.keys():
+        vis_type = config['vis_type']
+    
+    if vis_type != 'scatter':
+        bf_range, image, xlen = convert_bf_to_array(bfdiag_points)
+        xaxis = np.linspace(min(values), max(values), xlen)
 
-    ax.plot(xaxis, np.ones_like(xaxis)*max(bf_range))
-    ax.plot(xaxis, np.ones_like(xaxis)*min(bf_range))
+        ax.plot(xaxis, np.ones_like(xaxis)*max(bf_range))
+        ax.plot(xaxis, np.ones_like(xaxis)*min(bf_range))
 
-    ax.imshow(image, cmap='binary', aspect='auto', interpolation='none')
-    #fig.figimage(image*255, xo=int(0.05*xpix), yo=int(0.075*ypix), cmap='binary')
+        ax.imshow(image, cmap='binary', aspect='auto', interpolation='none')
+        #fig.figimage(image*255, xo=int(0.05*xpix), yo=int(0.075*ypix), cmap='binary')
+    else:
+        for n, v in enumerate(values):
+        #if n < skipfrom: continue
+        for pt in bfdiag_points[n]:
+            if config['bf_absv']: pt = np.abs(pt)
+            ax.scatter(v, pt, s=1, c=our_color, marker=',')
     xticks = list(np.linspace(0, len(xaxis)-1, 20, dtype=int))
     ax.set_xticks(xticks)
     ax.set_xticklabels(np.round(xaxis[xticks],3))

@@ -34,12 +34,11 @@ def dispatch(setup, config):
         if mode == 'exp1':
             rn = sim.get_exponential_axis
 
-        #TODO: use calculations to determine the critical points of interest
         sweep_params = list(sweep.values())[0]
         results['axis'], results['groups'], results['fr'] = sim.general_sweep(
                 setup, config, skey, sweep_params, rn
             )
-        results['bifs']=sim.get_bifurcations_from_groups(results)
+        sim.get_bifurcations_from_groups(results)
         config[skey] = sweep #set our config back to original value
     else:
         results = sim.trace(setup, config)

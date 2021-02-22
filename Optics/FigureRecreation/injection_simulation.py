@@ -65,117 +65,41 @@ def normalize_trace(trace, width):
     rolling_avg = np.convolve(np.ones(width)/width, trace, mode='same')
     return trace - rolling_avg
 
-'''
-    Plot the analysis of a single set of input parameters
+#'''
+#    Plot the analysis of a single set of input parameters
 
-    Simulates the system for a set type of initial conds and given input params
+#    Simulates the system for a set type of initial conds and given input params
 
-    parameters:
-    E_0 - the references E-field
-    P - the pumping rate
-    DELTA - the detuning factor
-    eta - the coupling coeff
-    b (nom 4) - the linewidth enhancement factor
-    T (nom 1000) - carrier : photon lifetime
-    llsim - simulation starting point
-    ulsim - simulation ending point
-    llcyc - for creating a window into traces, the lower bound
-    ulcyc - for creating a window into traces, the upper bound
-'''
-def trace_single_analysis(setup, init, P, DELTA, eta, b=4, T=1000, sim_step=1.0,
-                          llsim=0, ulsim=10000, llcyc=3000, ulcyc=5000):
-    #Get the system of equations
-    funcs = setup(P, DELTA, b, eta, T)
+#    parameters:
+#    E_0 - the references E-field
+#    P - the pumping rate
+#    DELTA - the detuning factor
+#    eta - the coupling coeff
+#    b (nom 4) - the linewidth enhancement factor
+#    T (nom 1000) - carrier : photon lifetime
+#    llsim - simulation starting point
+#    ulsim - simulation ending point
+#    llcyc - for creating a window into traces, the lower bound
+#    ulcyc - for creating a window into traces, the upper bound
+#'''
+#def trace_single_analysis(setup, init, P, DELTA, eta, b=4, T=1000, sim_step=1.0,
+#                          llsim=0, ulsim=10000, llcyc=3000, ulcyc=5000):
+#    #Get the system of equations
+#    funcs = setup(P, DELTA, b, eta, T)
 
-    #simulate the system for bounds llsim and ulsim (lower and upper level)
-    traces, time_trace = simulate_functions(init, funcs, llsim, ulsim, step=sim_step)
+#    #simulate the system for bounds llsim and ulsim (lower and upper level)
+#    traces, time_trace = simulate_functions(init, funcs, llsim, ulsim, step=sim_step)
 
-    #normalize the electric field and perform a DFT on it
-    norm_e = normalize_trace(traces[0], 100)
-    fft_trace = freq_analysis_trace(norm_e, time_trace, 1.0)
+#    #normalize the electric field and perform a DFT on it
+#    norm_e = normalize_trace(traces[0], 100)
+#    fft_trace = freq_analysis_trace(norm_e, time_trace, 1.0)
 
-    return time_trace, traces, fft_trace
+#    return time_trace, traces, fft_trace
 
 #function eventually for getting a single trace
 def trace(setup, config):
     pass
 
-'''
-    Sweep through eta values, recording the min and max points in the resulting
-    waveforms, as well as the frequency spectrum
-
-    parameters:
-    e_min - starting eta value
-    e_min - ending eta value
-    e_step - the smallest change in eta
-    P - the pumping rate
-    DELTA - the detuning factor
-    b (nom 4) - the linewidth enhancement factor
-    T (nom 1000) - carrier : photon lifetime
-    llsim - simulation starting point
-    ulsim - simulation ending point
-    llcyc - for creating a window into traces, the lower bound
-    ulcyc - for creating a window into traces, the upper bound
-
-    returns:
-    e_values - the created axis (np array) of eta values
-    bfdiag_points - the list of lists of peaks found for each eta
-    freqs - the list (np array/matrix) of frequencies for each eta
-'''
-def eta_sweep(setup, e_min, e_max, e_step, P, DELTA, alpha=4, T=1000,       #TODO: take in axis, sweep other params
-              reverse=False, llsim=0, ulsim=6000, sim_step=1.0,         #TODO: dynamic determination of start and end
-              llcyc=5500, ulcyc=6000, continuation=True, ex_bias=0.001):
-    #Define initial values
-    init=[np.sqrt(P),0,0]
-
-    #The Eta axis
-    e_values = np.arange(e_min, e_max, e_step)
-    if reverse: e_values = np.flip(e_values)
-    e_size = e_values.size
-    print('Performing {0} simulations...'.format(e_size))
-
-    #The empty bfdiag:
-    bfdiag_points = []
-
-    #The empty frequency heatmap
-    freqs = np.zeros((e_size, ulcyc-llcyc))
-
-    f_out = None
-    first_run = True
-    for n in range(e_size):
-        bfdiag_points.append([])
-    for n, eta in enumerate(e_values):
-        LAMBDA=eta
-        print('n is: {0}\r'.format(n), end='') #TODO: time remaining calc
-        #Get the system of equations
-        funcs = setup(P, DELTA, alpha, LAMBDA, T)
-
-        #Take a window into the relevant portion of the E-field trace
-        y, t = simulate_functions(init, funcs, llsim, ulsim, step=sim_step)
-        f_out = y[0][llcyc:ulcyc]
-        if continuation: init = [i[-1] for i in y]
-
-        #Perform frequency analysis on that window
-        #freqs[n] = freq_analysis_trace(f_out, times, 0)
-
-        #Find all local minima and maxima and add them to the bifurcation diagrm
-        bfdiag_points[n] = get_extrema(f_out, ex_bias)
-    print('\nEta sweep complete')
-    return e_values, bfdiag_points, freqs
-
-#def convert_bf_to_traces(bfdiag_points):  TODO: create a fn for more efficient plotting
-#    #convert bfdiag scatter points to traces
-#    bfdiag_traces = []
-#    for n in range(len(bfdiag_points[0])):
-#        trace = []
-#        for m in range(len(bfdiag_points)):
-#            try:
-#                trace.append(bfdiag_points[m][n])
-#            except Exception as e:
-#                print(e)
-#                trace.append(0.0)
-#        bfdiag_traces.append(np.array(trace))
-#    return bfdiag_traces
 
 '''
     Perform a sweep of any value
@@ -221,7 +145,7 @@ def general_sweep(setup, c, sweep_key, sweep_space, axis_gen=np.linspace):
         y, t = simulate_functions(init, funcs, c['llsim'], c['ulsim'],
                                   step=c['sim_step'])
         f_out = y[0][c['llcyc']:c['ulcyc']]
-        if c['bf_continuation']: init = [i[-1] for i in y]
+        if c['bf_continuation']: init = [abs(i[-1]) for i in y]
 
         #Perform frequency analysis on that window
         #freqs[n] = freq_analysis_trace(f_out, times, 0)
@@ -230,35 +154,12 @@ def general_sweep(setup, c, sweep_key, sweep_space, axis_gen=np.linspace):
         bfdiag_points[n] = get_extrema(f_out, c['ex_bias'])
     print('Sweep of var {0} complete'.format(sweep_key))
     return sweep_values, bfdiag_points, freqs
-
-def get_FRDPs(c):
-    alpha, P, T = c['alpha'], c['P'], c['T']
-    gamma_r = (1 + 2*P)/(2*T)
-    omega_r = np.sqrt(complex((2*P/T) - gamma_r**2))
-    c['gamma_r'] = gamma_r
-    c['omega_r'] = omega_r
-    return gamma_r, omega_r
-
-def get_fwd_rev_hopf(c, gamma_r=None, omega_r=None):
-    alpha, P, T = c['alpha'], c['P'], c['T']
-
-    if gamma_r == None: gamma_r = c['gamma_r']
-    if omega_r == None: omega_r = c['omega_r']
-
-    eta_FH = 2*gamma_r*(np.sqrt(alpha**2 + 1)/(alpha**2 - 1))
-    eta_RH = omega_r*np.sqrt(complex((alpha**2 - 1)/2))
-    c['eta_FH'] = eta_FH
-    c['eta_RH'] = eta_RH
-    return eta_FH, eta_RH
-
-def get_bifurcations_from_groups(results):
-    return []
     
-def get_exponential_axis(start, stop, num, base=np.e):
-    print('exp')
-    ax = np.linspace(start, stop, num)
-    mu = np.linspace(0, 1, num)
-    mu = np.exp(mu)
-    ax *= mu
+def get_exponential_axis(start, stop, num, mag=2):
+    print('exp v1')
+    r = 1 - np.power(10.0, -mag)
+    ax = 1 - np.power(r, np.arange(num))
+    ax *= (stop + start)
+    ax -= start
     return ax
 
