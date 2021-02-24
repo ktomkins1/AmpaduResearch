@@ -83,7 +83,7 @@ def main(E_0, rho, theta_s, logLAMBDA, alpha=4,
          override_theta_s=None):
     #constants!
     tau_p = 2*10**-3
-    LAMBDA = 10**logLAMBDA
+    LAMBDA = 0#10**logLAMBDA
     
     if override_theta_s != None:
         theta_s = get_theta_s(override_theta_s, rho, alpha=alpha)
@@ -104,7 +104,7 @@ def main(E_0, rho, theta_s, logLAMBDA, alpha=4,
     funcs = setup(LAMBDA, DELTA, alpha, P_1, P_2, 1000)
     
     #Define time list and  initial value
-    init=[E_0,0.1,0,0,0]
+    init=[np.sqrt(0.5),np.sqrt(0.5),0,0,0]
     
     r, t = time_and_result_2(init, funcs, llsim, ulsim)
     time = t*tau_p
@@ -116,6 +116,7 @@ def main(E_0, rho, theta_s, logLAMBDA, alpha=4,
         plot_data= r[k]
         ax = axes[k]
         ax.set_title(names[k])
+        ax.set_ybound(lower=-1.0, upper=1.0)
         if k == 4: ax.set_xlabel("Time [ns]")
         ax.set_ylabel("Amplitude")
         ax.plot(time, plot_data)
@@ -152,9 +153,9 @@ def time_and_result_2(init, funcs, ll, ul):
     
 
 if __name__ == '__main__':
-    main(0.5, 0.20, 1.89, -2.2)
+    main(0.5, 0.20, 1.89, -2.2, llcyc=6000, ulcyc=7000)
     main(0.5, 0.24, 2.75, -2.2)
-    main(0.5, 0.05, np.pi, -2.2, llcyc=6000, ulcyc=7000)
-    main(0.5, 0.005, np.pi, -2.2, llcyc=6000, ulcyc=7000)
+    main(0.5, 0.05, 3.1415, -2.2, llcyc=6000, ulcyc=7000)
+    main(0.5, 0.005, 3.1415, -2.2, llcyc=6000, ulcyc=7000)
     
     
