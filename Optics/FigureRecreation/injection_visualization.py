@@ -72,23 +72,24 @@ def plot_bif_diag(results, value_name, config, save_loc, override_fig=None, over
         bifurcations = results['bifurcations']
     except KeyError:
         pass
-    
+
     if type(override_fig) is type(None) and type(override_ax) is type(None):
         fig = figmod.Figure(figsize=(12, 9))
         ax = fig.add_axes([0.05, 0.075, 0.9, 0.85])
-        fig.suptitle("Bifurcation analysis of {0} from {1} to {2}\n".format(
+        fig.suptitle("Bifurcation analysis of {} from {} to {} (n={})\n".format(
                         value_name,
-                        round(values[0], 4),
-                        round(values[-1], 4)) + get_param_description(config))
-    
+                        round(xaxis[0], 4),
+                        round(xaxis[-1], 4),
+                        len(xaxis)) + get_param_description(config))
+
     #TODO: find these optimally
     our_dpi = 500
     xpix, ypix = 12*our_dpi, 9*our_dpi
-    
+
     vis_type = 'scatter'
     if 'vis_type' in config.keys():
         vis_type = config['vis_type']
-    
+
     if vis_type != 'scatter':
         bf_range, image, xlen = convert_bf_to_array(bfdiag_points)
         xaxis = np.linspace(min(xaxis), max(xaxis), xlen)
@@ -98,20 +99,20 @@ def plot_bif_diag(results, value_name, config, save_loc, override_fig=None, over
 
         ax.imshow(image, cmap='binary', aspect='auto', interpolation='none')
         #fig.figimage(image*255, xo=int(0.05*xpix), yo=int(0.075*ypix), cmap='binary')
+        xticks = list(np.linspace(0, len(xaxis)-1, 20, dtype=int))
+        ax.set_xticks(xticks)
+        ax.set_xticklabels(np.round(xaxis[xticks],3))
+
+        yticks = list(np.linspace(0, len(bf_range)-1, 20, dtype=int))
+        ax.set_yticks(yticks)
+        ax.set_yticklabels(np.round(bf_range[yticks],3))
     else:
         for n, v in enumerate(xaxis):
-        #if n < skipfrom: continue
-        for pt in bfdiag_points[n]:
-            if config['bf_absv']: pt = np.abs(pt)
-            ax.scatter(v, pt, s=1, c=our_color, marker=',')
-    xticks = list(np.linspace(0, len(xaxis)-1, 20, dtype=int))
-    ax.set_xticks(xticks)
-    ax.set_xticklabels(np.round(xaxis[xticks],3))
-    ax.set_xlabel(value_name)
+            for pt in bfdiag_points[n]:
+                if config['bf_absv']: pt = np.abs(pt)
+                ax.scatter(v, pt, s=1, c=our_color)#, marker=',')
 
-    yticks = list(np.linspace(0, len(bf_range)-1, 20, dtype=int))
-    ax.set_yticks(yticks)
-    ax.set_yticklabels(np.round(bf_range[yticks],3))
+    ax.set_xlabel(value_name)
     ax.set_ylabel('Amplitude Extrema')
 
     for bx, by in bifurcations:
@@ -159,7 +160,7 @@ def convert_bf_to_array(bf, rounding=3, xprop=4, yprop=3):
             min_dist = dist
 
     bf_range = np.arange(mini, maxi, min_dist)
-    
+
     #find scaling factor(s) to elongate image to fit
     xlen = len(bf)
     ylen = len(bf_range)

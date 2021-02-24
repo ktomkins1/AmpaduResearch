@@ -14,7 +14,7 @@ import argparse
 
 from matplotlib import pyplot as plt
 #from threading import Thread
-from multiprocessing import Process
+from multiprocessing import Process, cpu_count
 
 #import model here
 #TODO: dynamically import from config
@@ -42,7 +42,7 @@ def bf_dispatch(setup, config):
                 setup, config, skey, sweep_params, rn
             )
         if 'bf_cnb' in config.keys():
-            bfd.get_cnb_from_groups(results)
+            bfd.get_cnb_from_groups(results, config['bf_cnb'])
         config[skey] = sweep #set our config back to original value
     else:
         results = sim.trace(setup, config)
@@ -109,7 +109,7 @@ def clean_config(c):
     cc.fix_config(c)
 
 def detect_sweep_key(c):
-    return [s for s in config.keys() if type(config[s]) is dict][0]
+    return [s for s in c.keys() if type(c[s]) is dict][0]
 
 def split_config_by_plots(c):
     num = c['bf_plot_num']
@@ -139,6 +139,12 @@ def split_config_by_plots(c):
         llim = factor + dsweep
 
     return outlist
+
+def run_threads(clist, target):
+    #dispatch all threads
+    threads = [Process(target=bf_dispatch, args=(model.setup, c)) for c in clist]
+    for t in threads: t.start()
+    for t in threads: t.join()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -186,9 +192,15 @@ if __name__ == '__main__':
     if e != None:
         print('processing simulations for {} in {}'.format(e, elist))
 
-    #dispatch all threads
-    threads = [Process(target=bf_dispatch, args=(model.setup, c)) for c in clist]
-    for t in threads: t.start()
-    for t in threads: t.join()
+    if len(clist) == 1:
+        bf_dispatch(model.setup, clist[0])
+    else:
+        ncpu = cpu_count()
+        i = 0
+        if len(clist) > ncpu:
+            for i in range(0, len(clist), ncpu):
+                if len(clist) - i < ncpu: break
+                run_threads(clist[i:i+ncpu], bf_dispatch)
+        run_threads(clist[i:], bf_dispatch)
 
     print("Done :)")

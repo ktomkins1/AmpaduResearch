@@ -34,6 +34,7 @@ config = {
     #parameters for sweeping
     'bf_reverse':False,        #run in reverse for bifurcation sweeps
     'bf_continuation':True,    #use the final values as next initial values
+    'bf_cnb':0.1,
 
     #parameters of the simulator
     'llsim':0,              #the beginning time point?
@@ -54,13 +55,14 @@ config = {
 }
 
 optional_params = ['desc', 'enc', 'root_dir', 'gamma_r', 'omega_r',
-                   'eta_FH', 'eta_RH', 'bf_plot_id', 'vis_type']
+                   'eta_FH', 'eta_RH', 'bf_plot_id', 'vis_type', 'bf_cnb']
 required_params = ['E_0','theta_0','N_0','alpha','eta','P','DELTA','T',
                    'tau_p','tau_c','model','model_shortname','bf_reverse',
                    'bf_continuation','llsim','ulsim','sim_step','llcyc',
                    'ulcyc','ex_bias','bf_absv','bf_fit_line',
                    'vis_save','vis_show', 'bf_plot_num']
-known_str_params = ['desc', 'enc', 'root_dir', 'model', 'model_shortname']
+known_str_params = ['desc', 'enc', 'root_dir', 'model',
+                    'model_shortname', 'vis_type']
 
 def create_short_desc(c, sep='-'):
     desc = c['model_shortname']
@@ -96,7 +98,7 @@ def create_config(E_0='np.sqrt(c[\'P\'])', theta_0=0.0, N_0=0.0, alpha=4.8,
                   bf_continuation=True, llsim=0, ulsim=6000, sim_step=1.0,
                   llcyc=5500, ulcyc=6000, ex_bias=0.001, bf_absv=False,
                   bf_fit_line=True, vis_save=True, vis_show=False,
-                  bf_plot_num=1, vis_type='scatter'):
+                  bf_plot_num=1, vis_type='scatter', bf_cnb=False):
     config = locals()
     fix_config(config)
     return config

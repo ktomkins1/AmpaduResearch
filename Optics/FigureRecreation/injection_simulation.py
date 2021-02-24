@@ -14,7 +14,6 @@ from maxima_determination import get_extrema
     funcs - the python functions corresponding to each diff eq F1..n
 '''
 def int_step(t,y,funcs):
-    #return np.array([f(*y) for f in funcs])
     return np.array([f(*y) for f in funcs])
 
 '''
@@ -48,7 +47,9 @@ def simulate_functions(initial_values, funcs, ll, ul, step=1.0, tol=None):
     dt - the sampling period of the time series
 '''
 def freq_analysis_trace(trace, time_trace, dt):
-    return np.abs(np.fft.fftshift(np.fft.fft(trace)))
+    ftrace = np.abs(np.fft.fftshift(np.fft.fft(trace)))
+    freqs = np.fft.fftshift(np.fft.fftfreq(len(time_trace), dt))
+    return ftrace, freqs
 
 '''
     For a single trace, establish a baseline and subtract it out
@@ -65,38 +66,7 @@ def normalize_trace(trace, width):
     rolling_avg = np.convolve(np.ones(width)/width, trace, mode='same')
     return trace - rolling_avg
 
-#'''
-#    Plot the analysis of a single set of input parameters
-
-#    Simulates the system for a set type of initial conds and given input params
-
-#    parameters:
-#    E_0 - the references E-field
-#    P - the pumping rate
-#    DELTA - the detuning factor
-#    eta - the coupling coeff
-#    b (nom 4) - the linewidth enhancement factor
-#    T (nom 1000) - carrier : photon lifetime
-#    llsim - simulation starting point
-#    ulsim - simulation ending point
-#    llcyc - for creating a window into traces, the lower bound
-#    ulcyc - for creating a window into traces, the upper bound
-#'''
-#def trace_single_analysis(setup, init, P, DELTA, eta, b=4, T=1000, sim_step=1.0,
-#                          llsim=0, ulsim=10000, llcyc=3000, ulcyc=5000):
-#    #Get the system of equations
-#    funcs = setup(P, DELTA, b, eta, T)
-
-#    #simulate the system for bounds llsim and ulsim (lower and upper level)
-#    traces, time_trace = simulate_functions(init, funcs, llsim, ulsim, step=sim_step)
-
-#    #normalize the electric field and perform a DFT on it
-#    norm_e = normalize_trace(traces[0], 100)
-#    fft_trace = freq_analysis_trace(norm_e, time_trace, 1.0)
-
-#    return time_trace, traces, fft_trace
-
-#function eventually for getting a single trace
+''' function eventually for getting a single trace '''
 def trace(setup, config):
     pass
 
@@ -154,7 +124,12 @@ def general_sweep(setup, c, sweep_key, sweep_space, axis_gen=np.linspace):
         bfdiag_points[n] = get_extrema(f_out, c['ex_bias'])
     print('Sweep of var {0} complete'.format(sweep_key))
     return sweep_values, bfdiag_points, freqs
-    
+
+'''
+    An alternative to np.linspace or arange for generating an axis
+
+    param mag: the base for creating the axis is 1-10^-mag
+'''
 def get_exponential_axis(start, stop, num, mag=2):
     print('exp v1')
     r = 1 - np.power(10.0, -mag)
@@ -162,4 +137,3 @@ def get_exponential_axis(start, stop, num, mag=2):
     ax *= (stop + start)
     ax -= start
     return ax
-
