@@ -27,6 +27,9 @@ config = {
     'tau_p':0.002,              #the photon lifetime    [typ 2x10^-3 ns]
     'tau_c':2.0,                #the carrier lifetime    [typ 2 ns]
 
+    #mode of the simulation
+    'mode': 'bif',
+
     #model to use
     'model':'model_phys_review_1996',
     'model_shortname':'PhyRev1996',
@@ -54,26 +57,35 @@ config = {
     'bf_plot_id': 1             #which results of a multi-result plot is this?
 }
 
-optional_params = ['desc', 'enc', 'root_dir', 'gamma_r', 'omega_r',
+optional_params = ['desc', 'enc', 'root_dir', 'gamma_r', 'omega_r', 'mode',
                    'eta_FH', 'eta_RH', 'bf_plot_id', 'vis_type', 'bf_cnb']
 required_params = ['E_0','theta_0','N_0','alpha','eta','P','DELTA','T',
                    'tau_p','tau_c','model','model_shortname','bf_reverse',
                    'bf_continuation','llsim','ulsim','sim_step','llcyc',
                    'ulcyc','ex_bias','bf_absv','bf_fit_line',
                    'vis_save','vis_show', 'bf_plot_num']
-known_str_params = ['desc', 'enc', 'root_dir', 'model',
+known_str_params = ['desc', 'enc', 'root_dir', 'model','mode',
                     'model_shortname', 'vis_type']
+known_modes = ['single', 'bif', 'multi', 'stability']
 
 def create_short_desc(c, sep='-'):
     desc = c['model_shortname']
-    desc += sep + 'lw' + str(c['alpha'])
-    desc += sep + 'T'  + str(c['T'])
-    desc += sep + 'DT' + str(c['DELTA'])
-    desc += sep + 'cc' + str(c['eta'])
-    desc += sep + 'P'  + str(c['P'])
+    try:
+        desc += c['mode'] + sep
+    except KeyError:
+        pass
+
+    keys = ['alpha', 'T', 'DELTA', 'eta', 'P']
+    for k in keys:
+        if type(c[k]) == type({}):
+            desc += k[0] + 'sweep'
+        else:
+            desc += k[0] + str(c[k])
+
     r, cnt = c['bf_reverse'], c['bf_continuation']
     if r or cnt:
         desc += sep + r*'r' + cnt*'c'
+
     return desc.replace(' ', '').replace('.', '_')
 
 def encode_config_hash(c):
@@ -86,10 +98,23 @@ def fix_config(c):
     for k in required_params:
         if k not in c.keys():
             print('Configuration Malformed. missing: {}'.format(k))
+    set_mode(c)
     c['enc'] = encode_config_hash(c)
-    if c['bf_plot_num'] > 1 : return
+    if c['bf_plot_num'] > 1 : return  #a (perhaps hackey) way of making many plots have same description
     c['bf_plot_id'] = 0
     c['desc'] = create_short_desc(c)
+
+def set_mode(c):
+    listcnt, dictcnt = 0,0
+    for k in c.keys():
+        if type(c[k]) == type({}): dictcnt += 1
+        if type(c[k]) == type([]): listcnt += 1
+
+    if dictcnt == 0: c['mode'] = 'single'
+    if dictcnt == 1: c['mode'] = 'bif'
+    if dictcnt > 1: c['mode'] = 'stability'
+    if listcnt >= 1: c['mode'] = 'many_' + c['mode']
+
 
 def create_config(E_0='np.sqrt(c[\'P\'])', theta_0=0.0, N_0=0.0, alpha=4.8,
                   eta=0.01, P=1.0, DELTA=0.0, T=958.0,
