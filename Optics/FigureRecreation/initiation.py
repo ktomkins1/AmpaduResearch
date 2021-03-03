@@ -18,7 +18,7 @@ from multiprocessing import Process, cpu_count
 
 #import model here
 #TODO: dynamically import from config
-import model_phys_review_1996 as model
+import models.model_PRL97 as model
 
 def bf_dispatch(setup, config):
     clean_config(config) #finalize config after splitting into multiple dicts
@@ -171,19 +171,22 @@ if __name__ == '__main__':
         will be created and stored.
     '''
     config = None
-    with open(args.cfilename, 'r') as fp:
+    cnfname = args.cfilename
+    if 'configs/' in cnfname:
+        cnfname = os.path.basename(cnfname)
+    with open('configs/' + cnfname, 'r') as fp:
         config = json.load(fp)
 
     if args.rfilename:
         #either find a config based on the given results filename or by cfilen
-        dispatch_saved(args.rfilename, args.cfilename)
+        dispatch_saved(args.rfilename, cnfname)
 
     config['desc'] = cc.create_short_desc(config)
     #create folder under results
     results_dirname = os.path.join('results', config['desc'])
     os.makedirs(results_dirname, exist_ok=True)
     #add the config to the results to make them reproducible
-    with open(os.path.join(results_dirname, args.cfilename), 'w') as f:
+    with open(os.path.join(results_dirname, cnfname), 'w') as f:
         json.dump(config, f)
     #save this dir for future use
     config['root_dir'] = str(os.path.abspath(results_dirname))

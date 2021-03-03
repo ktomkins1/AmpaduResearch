@@ -128,8 +128,8 @@ def create_config(E_0='np.sqrt(c[\'P\'])', theta_0=0.0, N_0=0.0, alpha=4.8,
     fix_config(config)
     return config
 
-def save_config(c, name='config.json'):
-    with open(name, 'w') as fp:
+def save_config(c, name='configs/config.json'):
+    with open(name, 'w+') as fp:
         json.dump(c, fp, indent=4)
 
 if __name__ == '__main__':

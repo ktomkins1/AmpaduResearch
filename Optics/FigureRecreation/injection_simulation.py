@@ -14,7 +14,22 @@ from maxima_determination import get_extrema
     funcs - the python functions corresponding to each diff eq F1..n
 '''
 def int_step(t,y,funcs):
-    return np.array([f(*y) for f in funcs])
+    retlist = []
+    size = 1
+    revisit = False
+    for i, f in enumerate(funcs):
+        val = f(t, *y)
+        if type(val) is list:
+            if size < len(val):
+                size = len(val)
+        else:
+            if size > 1:
+                val = [val for i in range(size)]
+            if i == 0:
+                revisit = True
+        retlist.append(val)
+
+    return [f(t,*y) for f in funcs]
 
 '''
     Perform simulation of the system using the Initial Value Problem approach
@@ -86,7 +101,7 @@ def trace(setup, config):
 '''
 def general_sweep(setup, c, sweep_key, sweep_space, axis_gen=np.linspace):
     #Define initial values
-    init=[c['E_0'],c['theta_0'],c['N_0']] #must be prepared
+    init=[c['E_0'],c['N_0']] #must be prepared
 
     #The Eta axis
     print('Sweep space is {}'.format(sweep_space))

@@ -120,12 +120,13 @@ def plot_bif_diag(results, value_name, config, save_loc, override_fig=None, over
 
     #try to plot lines for the hopfs
     try:
-        eta_FH = config['eta_FH']
-        if min(xaxis) < eta_FH < max(xaxis):
-            ax.axvline(eta_FH)
-        eta_RH = config['eta_RH']
-        if min(xaxis) < eta_RH < max(xaxis):
-            ax.axvline(eta_RH)
+        if value_name == 'eta':
+            eta_FH = config['eta_FH']
+            if min(xaxis) < eta_FH < max(xaxis):
+                ax.axvline(eta_FH)
+            eta_RH = config['eta_RH']
+            if min(xaxis) < eta_RH < max(xaxis):
+                ax.axvline(eta_RH)
     except Exception as e:
         print('hopf rev or fwd not present')
 
@@ -207,16 +208,13 @@ def plot_waterfall(e_values, freqs):
     return plt.show
 
 def get_param_description(c):
-    print(type(c))
-    try:
-        desc = ''
-        desc += 'Pumping:' + str(c['P'])
-        desc += ' Linewidth:' + str(c['alpha'])
-        desc += ' T:' + str(c['T'])
-        desc += ' Detuning:' + str(c['DELTA'])
-    except Exception as e:
-        print(e)
-        desc='Oops yo'
+    desc = ''
+    subdesc = ['P:',' alpha:',' T:',' Detuning:',' eta:']
+    descvals = [c['P'],c['alpha'],c['T'],c['DELTA'],c['eta']]
+
+    for i, sstr in enumerate(subdesc):
+        if type(descvals[i]) != dict:
+            desc += sstr + str(descvals[i])
 
     return desc
 
