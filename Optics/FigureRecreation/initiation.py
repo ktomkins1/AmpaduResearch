@@ -18,7 +18,7 @@ from multiprocessing import Process, cpu_count
 
 #import model here
 #TODO: dynamically import from config
-import models.model_PRL97 as model
+import models.model_psi_v2 as model
 
 def bf_dispatch(setup, config):
     clean_config(config) #finalize config after splitting into multiple dicts

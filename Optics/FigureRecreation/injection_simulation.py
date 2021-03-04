@@ -101,7 +101,7 @@ def trace(setup, config):
 '''
 def general_sweep(setup, c, sweep_key, sweep_space, axis_gen=np.linspace):
     #Define initial values
-    init=[c['E_0'],c['N_0']] #must be prepared
+    init=[c['E_0'],c['theta_0'],c['N_0']] #must be prepared
 
     #The Eta axis
     print('Sweep space is {}'.format(sweep_space))
