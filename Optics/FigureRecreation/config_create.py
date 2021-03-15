@@ -2,7 +2,7 @@ import io
 import json
 import pickle
 import inspect
-import lzma
+#import lzma
 from hashlib import blake2b
 
 #change the values below before running

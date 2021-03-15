@@ -80,26 +80,27 @@ def dispatch_saved(fname, config):
 
 def enumerate_configs(c):
     c['bf'] = False
-    elist, ekey = None, None
+    edict, ekeys = {}, []
     clist = []
 
     #check each item in config c and see if c is a sweep
     #check for enumerator
     for k in c.keys():
         if type(c[k]) == type([]):
-            elist = c[k]
-            ekey = k
+            edict[k] = c[k]
+            ekeys.append(k)
         elif type(c[k]) == type({}):
-            c['bf'] = True
+            c['bf'] += 1
 
-    if elist == None:
+    if edict == {}:
         clist += split_config_by_plots(c)
     else:
-        for item in elist:
-            d = c.copy()
-            d[ekey] = item
-            clist += split_config_by_plots(d)
-    return clist, elist, ekey
+        for item_name in ekeys:
+            for item in edict[item_name]:
+                d = c.copy()
+                d[item_name] = item
+                clist += split_config_by_plots(d)
+    return clist, edict, ekeys
 
 def clean_config(c):
     for k in c.keys():
@@ -191,9 +192,9 @@ if __name__ == '__main__':
     #save this dir for future use
     config['root_dir'] = str(os.path.abspath(results_dirname))
 
-    clist, elist, e = enumerate_configs(config)
-    if e != None:
-        print('processing simulations for {} in {}'.format(e, elist))
+    clist, edict, ekeys = enumerate_configs(config)
+    if ekeys != []:
+        print('processing simulations for item in {}'.format(ekeys))
 
     if len(clist) == 1:
         bf_dispatch(model.setup, clist[0])
