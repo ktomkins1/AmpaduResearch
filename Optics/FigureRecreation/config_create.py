@@ -20,7 +20,7 @@ config = {
     'N_0':0.0,                  #initial carrier density
     'alpha':4.8,                #the line-width enhancement factor    [typ 4]
     'eta':{'linspace':(0.0, 0.014, 10)},   #the coupling constant
-    'P':9.3,   #the excess pumping rate
+    'P':9.3,                    #the excess pumping rate
     'DELTA':0.0,                #the cavity optical detuning
     'T':958.0,                  #carrier lifetime to photon lifetime  [typ 10^3]
     'tau_p':0.002,              #the photon lifetime    [typ 2x10^-3 ns]
@@ -66,8 +66,8 @@ required_params = ['E_0','theta_0','N_0','alpha','eta','P','DELTA','T',
                    'ulcyc','ex_bias','bf_absv','bf_fit_line',
                    'vis_save','vis_show', 'bf_plot_num']
 known_str_params = ['desc', 'enc', 'root_dir', 'model','mode',
-                    'model_shortname', 'vis_type']
-#known_modes = ['single', 'bif', 'multi', 'stability']
+                    'model_shortname', 'vis_type', 'ez_name']
+#known_modes = ['auto', 'single', 'bif', 'multi', 'stability']
 implemented_modes = ['bif']
 axis_mode_support = ['linspace', 'arange', 'exp', 'percent']
 pct_axis_support = ['eta']
