@@ -27,7 +27,8 @@ def bf_dispatch(setup, config):
         #get key for sweeping
         skey = detect_sweep_key(config)
         sweep = dict(config[skey]) #copying should not matter, but well whatever
-
+        sweep_params = list(sweep.values())[0]
+        
         if skey == 'eta':
             bfd.get_FRDPs(config)
             bfd.get_fwd_rev_hopf(config)
@@ -40,11 +41,11 @@ def bf_dispatch(setup, config):
         if rnmode == 'exp1':
             rn = sim.get_exponential_axis
         if rnmode == 'percent':
-            rn = sim.get_pct_bounds
-            if skey not in model.pct_axis_support: 
+            if skey not in cc.pct_axis_support: 
                 raise ValueError("initiation.py: Attempting to use pct axis on {1}".format(skey))
+            rn = sim.get_pct_bounds_axis
+            sweep_params = [np.real(config['eta_FH']), np.real(config['eta_RH'])] + sweep_params
 
-        sweep_params = list(sweep.values())[0]
         results['axis'], results['groups'], results['fr'] = sim.general_sweep(
                 setup, config, skey, sweep_params, rn
             )
@@ -86,29 +87,39 @@ def dispatch_saved(fname, config):
     vis.plot_bif_diag(results, skey, config, targetdir)
 
 def enumerate_configs(c):
-    c['bf'] = False
-    edict, ekeys = {}, []
+    c['bf'] = 0
+    #edict = {}
+    ekeys = []
     clist = []
 
     #check each item in config c and see if c is a sweep
     #check for enumerator
     for k in c.keys():
         if type(c[k]) == type([]):
-            edict[k] = c[k]
+            #edict[k] = c[k]
             ekeys.append(k)
         elif type(c[k]) == type({}):
             c['bf'] += 1
 
-    if edict == {}:
-        clist += split_config_by_plots(c)
-    else:
-        for item_name in ekeys:
-            for item in edict[item_name]:
-                d = c.copy()
-                d[item_name] = item
-                clist += split_config_by_plots(d)
+    clist = enumerate_configs_r(c, ekeys)
+                
+    clist_ = []
+    for c in clist:
+        clist_ += split_config_by_plots(c)
+    clist = clist_
     return clist, edict, ekeys
 
+def enumerate_configs_r(c, ekeys):
+    if ekeys == []:
+        return [c.copy()]
+    
+    clist = []
+    for item in c[ekeys[0]]:
+        d = c.copy()
+        d[ekeys[0]] = item
+        clist += enumerate_configs_r(d, ekeys[1:])
+    return clist
+            
 def clean_config(c):
     for k in c.keys():
         if k in cc.known_str_params: continue
@@ -131,6 +142,8 @@ def split_config_by_plots(c):
     llim, ulim, dsweep = list(c[skey].values())[0]
 
     stype = list(c[skey].keys())[0]
+    if stype not in ['arange', 'linspace']: 
+        raise NotImplementedError("Cannot use multiplotting with '{}' axis gen".format(stype))
     if stype == 'linspace':
         #convert to arange
         dsweep = (ulim-llim)/dsweep
@@ -160,6 +173,8 @@ if __name__ == '__main__':
                         help="The configuration file to load", dest='cfilename')
     parser.add_argument('-r', '--results', default=None,
                         help="The results file to load", dest='rfilename')
+    parser.add_argument('-z', '--ez_name', default=None,
+                        help="A friendly name for the folder", dest='ezname')
     #TODO: put an argument to either show or save the plot
 
     args = parser.parse_args()
@@ -190,8 +205,12 @@ if __name__ == '__main__':
         dispatch_saved(args.rfilename, cnfname)
 
     config['desc'] = cc.create_short_desc(config)
+    foldername = config['desc']
+    if args.ezname:
+        config['ez_name'] = args.ezname
+        foldername = config['ez_name']
     #create folder under results
-    results_dirname = os.path.join('results', config['desc'])
+    results_dirname = os.path.join('results', foldername)
     os.makedirs(results_dirname, exist_ok=True)
     #add the config to the results to make them reproducible
     with open(os.path.join(results_dirname, cnfname), 'w') as f:
@@ -213,5 +232,6 @@ if __name__ == '__main__':
                 if len(clist) - i < ncpu: break
                 run_threads(clist[i:i+ncpu], bf_dispatch)
         run_threads(clist[i:], bf_dispatch)
+    #TODO: combine all results files into one if it was split just on plot nums
 
     print("Done :)")

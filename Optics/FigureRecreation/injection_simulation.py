@@ -14,21 +14,6 @@ from maxima_determination import get_extrema
     funcs - the python functions corresponding to each diff eq F1..n
 '''
 def int_step(t,y,funcs):
-    retlist = []
-    size = 1
-    revisit = False
-    for i, f in enumerate(funcs):
-        val = f(t, *y)
-        if type(val) is list:
-            if size < len(val):
-                size = len(val)
-        else:
-            if size > 1:
-                val = [val for i in range(size)]
-            if i == 0:
-                revisit = True
-        retlist.append(val)
-
     return [f(t,*y) for f in funcs]
 
 '''
@@ -130,10 +115,10 @@ def general_sweep(setup, c, sweep_key, sweep_space, axis_gen=np.linspace):
         y, t = simulate_functions(init, funcs, c['llsim'], c['ulsim'],
                                   step=c['sim_step'])
         f_out = y[0][c['llcyc']:c['ulcyc']]
-        if c['bf_continuation']: init = [abs(i[-1]) for i in y]
+        if c['bf_continuation']: init = [abs(i[-1]) for i in y] #y is trace list
 
         #Perform frequency analysis on that window
-        #freqs[n] = freq_analysis_trace(f_out, times, 0)
+        freqs[n] = freq_analysis_trace(f_out, t[c['llcyc']:c['ulcyc']], 0)
 
         #Find all local minima and maxima and add them to the bifurcation diagrm
         bfdiag_points[n] = get_extrema(f_out, c['ex_bias'])
@@ -152,3 +137,23 @@ def get_exponential_axis(start, stop, num, mag=2):
     ax *= (stop + start)
     ax -= start
     return ax
+    
+'''
+    An alternative to np.linspace or arange for generating an axis
+    
+    param start_val: the value at 0%
+    param stop_val: the value at 100%
+    param start_pct: the percent to start at
+    param stop_pct: the percent to stop at
+    
+'''
+def get_pct_bounds_axis(start_val, stop_val, start_pct, stop_pct, num):
+    p100 = stop_val - start_val
+    lbound = p100*start_pct/100 + start_val
+    rbound = p100*stop_pct/100 + start_val
+    return np.linspace(lbound, rbound, num)
+    
+    
+    
+    
+    

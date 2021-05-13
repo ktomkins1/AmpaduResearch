@@ -132,9 +132,13 @@ def plot_bif_diag(results, value_name, config, save_loc, override_fig=None, over
 
 
     if config['vis_save']:
-        fstring = 'result_figure{}.png'.format(config['bf_plot_id'])
-        fname = os.path.join(save_loc, fstring)
-        fig.savefig(fname, dpi=our_dpi)
+        all_pics_folder = os.path.join(config['root_dir'], 'all_pics')
+        os.makedirs(all_pics_folder, exist_ok=True)
+        local_fstring = 'result_figure{}.png'.format(config['bf_plot_id'])
+        global_fstring = config['desc'] + '_' + str(config['bf_plot_id']) + '.png'
+        for fname in [os.path.join(save_loc, local_fstring), 
+                      os.path.join(all_pics_folder, global_fstring)]:
+            fig.savefig(fname, dpi=our_dpi)
     if get_fig:
         return fig, ax
     if config['vis_show']:

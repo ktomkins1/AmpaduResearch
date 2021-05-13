@@ -2,12 +2,11 @@ import io
 import json
 import pickle
 import inspect
-#import lzma
+import lzma
 from hashlib import blake2b
 
 #change the values below before running
-#one dict and one list are allowed.
-#These will determine values to sweep and compare, respectively
+#Several simulations will be run on enumerated configs taking values from lists
 #dict option must be like {'linspace'|'arange':(start, end, n|d)}
 #list option should be less than 8 options
 #string option will be executed by exec and must be a statement which will be
@@ -31,13 +30,14 @@ config = {
     'mode': 'bif',
 
     #model to use
-    'model':'model_phys_review_1996',
-    'model_shortname':'PhyRev1996',
+    'model':'model_psi_v2',
+    'model_shortname':'psi2',
 
     #parameters for sweeping
     'bf_reverse':False,        #run in reverse for bifurcation sweeps
     'bf_continuation':True,    #use the final values as next initial values
-    'bf_cnb':0.1,
+    'bf_cnb':0.1,              #bias for determining a bifurcation has occurred
+    'bf_norm':True,            #save the extrema wrt 0 instead of strictly > 0
 
     #parameters of the simulator
     'llsim':0,              #the beginning time point?
@@ -57,8 +57,9 @@ config = {
     'bf_plot_id': 1             #which results of a multi-result plot is this?
 }
 
-optional_params = ['desc', 'enc', 'root_dir', 'gamma_r', 'omega_r', 'mode',
-                   'eta_FH', 'eta_RH', 'bf_plot_id', 'vis_type', 'bf_cnb']
+optional_params = ['desc', 'enc', 'root_dir', 'gamma_r', 'omega_r', 
+                   'eta_FH', 'eta_RH', 'bf_plot_id', 'bf_norm', 'bf_cnb',
+                   'mode','vis_type', 'ez_name']
 required_params = ['E_0','theta_0','N_0','alpha','eta','P','DELTA','T',
                    'tau_p','tau_c','model','model_shortname','bf_reverse',
                    'bf_continuation','llsim','ulsim','sim_step','llcyc',
@@ -66,8 +67,10 @@ required_params = ['E_0','theta_0','N_0','alpha','eta','P','DELTA','T',
                    'vis_save','vis_show', 'bf_plot_num']
 known_str_params = ['desc', 'enc', 'root_dir', 'model','mode',
                     'model_shortname', 'vis_type']
-known_modes = ['single', 'bif', 'multi', 'stability']
+#known_modes = ['single', 'bif', 'multi', 'stability']
 implemented_modes = ['bif']
+axis_mode_support = ['linspace', 'arange', 'exp', 'percent']
+pct_axis_support = ['eta']
 
 def create_short_desc(c, sep='-'):
     desc = c['model_shortname']
@@ -117,17 +120,17 @@ def set_mode(c):
     if listcnt >= 1: c['mode'] = 'many_' + c['mode']
 
 
-def create_config(E_0='np.sqrt(c[\'P\'])', theta_0=0.0, N_0=0.0, alpha=4.8,
-                  eta=0.01, P=1.0, DELTA=0.0, T=958.0,
-                  tau_p=0.002,  tau_c=2.0, model='model_phys_review_1996',
-                  model_shortname='PhyRev1996', bf_reverse=False,
-                  bf_continuation=True, llsim=0, ulsim=6000, sim_step=1.0,
-                  llcyc=5500, ulcyc=6000, ex_bias=0.001, bf_absv=False,
-                  bf_fit_line=True, vis_save=True, vis_show=False,
-                  bf_plot_num=1, vis_type='scatter', bf_cnb=False):
-    config = locals()
-    fix_config(config)
-    return config
+#def create_config(E_0='np.sqrt(c[\'P\'])', theta_0=0.0, N_0=0.0, alpha=4.8,
+#                  eta=0.01, P=1.0, DELTA=0.0, T=958.0,
+#                  tau_p=0.002,  tau_c=2.0, model='model_psi_v2',
+#                  model_shortname='psi2', bf_reverse=False,
+#                  bf_continuation=True, llsim=0, ulsim=6000, sim_step=1.0,
+#                  llcyc=5500, ulcyc=6000, ex_bias=0.001, bf_absv=False,
+#                  bf_fit_line=True, vis_save=True, vis_show=False,
+#                  bf_plot_num=1, vis_type='scatter', bf_cnb=False):
+#    config = locals()
+#    fix_config(config)
+#    return config
 
 def save_config(c, name='configs/config.json'):
     with open(name, 'w+') as fp:
