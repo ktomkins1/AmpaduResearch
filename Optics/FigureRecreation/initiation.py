@@ -107,7 +107,8 @@ def enumerate_configs(c):
     for c in clist:
         clist_ += split_config_by_plots(c)
     clist = clist_
-    return clist, edict, ekeys
+    #return clist, edict, ekeys
+    return clist, ekeys
 
 def enumerate_configs_r(c, ekeys):
     if ekeys == []:
@@ -218,7 +219,7 @@ if __name__ == '__main__':
     #save this dir for future use
     config['root_dir'] = str(os.path.abspath(results_dirname))
 
-    clist, edict, ekeys = enumerate_configs(config)
+    clist, ekeys = enumerate_configs(config)
     if ekeys != []:
         print('processing simulations for item in {}'.format(ekeys))
 

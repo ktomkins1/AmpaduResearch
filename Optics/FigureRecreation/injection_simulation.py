@@ -118,7 +118,8 @@ def general_sweep(setup, c, sweep_key, sweep_space, axis_gen=np.linspace):
         if c['bf_continuation']: init = [abs(i[-1]) for i in y] #y is trace list
 
         #Perform frequency analysis on that window
-        freqs[n] = freq_analysis_trace(f_out, t[c['llcyc']:c['ulcyc']], 0)
+        #TODO: figure out dt
+        freqs[n] = freq_analysis_trace(f_out, t[c['llcyc']:c['ulcyc']], 1.0)[0]
 
         #Find all local minima and maxima and add them to the bifurcation diagrm
         bfdiag_points[n] = get_extrema(f_out, c['ex_bias'])
