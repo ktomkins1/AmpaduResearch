@@ -22,20 +22,27 @@ import models.model_psi_v2 as model
 
 def bf_dispatch(setup, config):
     clean_config(config) #finalize config after splitting into multiple dicts
-    bfd.get_FRDPs(config)
-    bfd.get_fwd_rev_hopf(config)
     results = {}
-    if config['bf']:
+    if config['mode'] == 'bif':
         #get key for sweeping
         skey = detect_sweep_key(config)
         sweep = dict(config[skey]) #copying should not matter, but well whatever
+
+        if skey == 'eta':
+            bfd.get_FRDPs(config)
+            bfd.get_fwd_rev_hopf(config)
+
         #get method of enumeration
         rn = np.linspace
-        mode = list(sweep.keys())[0]
-        if mode == 'arange':
+        rnmode = list(sweep.keys())[0]
+        if rnmode == 'arange':
             rn = np.arange
-        if mode == 'exp1':
+        if rnmode == 'exp1':
             rn = sim.get_exponential_axis
+        if rnmode == 'percent':
+            rn = sim.get_pct_bounds
+            if skey not in model.pct_axis_support: 
+                raise ValueError("initiation.py: Attempting to use pct axis on {1}".format(skey))
 
         sweep_params = list(sweep.values())[0]
         results['axis'], results['groups'], results['fr'] = sim.general_sweep(

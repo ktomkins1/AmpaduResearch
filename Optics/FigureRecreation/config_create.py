@@ -67,6 +67,7 @@ required_params = ['E_0','theta_0','N_0','alpha','eta','P','DELTA','T',
 known_str_params = ['desc', 'enc', 'root_dir', 'model','mode',
                     'model_shortname', 'vis_type']
 known_modes = ['single', 'bif', 'multi', 'stability']
+implemented_modes = ['bif']
 
 def create_short_desc(c, sep='-'):
     desc = c['model_shortname']
