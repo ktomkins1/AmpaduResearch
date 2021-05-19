@@ -26,12 +26,23 @@ def group_values(y, bias):
 
     returns: list of extrema, averaged to reduce numerocity
 '''
-def get_extrema(trace, bias):
+def get_extrema(trace, config):
+    bias = config['ex_bias']
+    norm = config['bf_norm']
     tr_peaks_only = list(trace[find_peaks(trace)[0]])
     tr_peaks_only += list(trace[find_peaks(-trace)[0]])
     tr_mean = np.mean(np.convolve(trace, [0.2, 0.2, 0.2, 0.2, 0.2], mode='same'))
+    if 'bf_norm_type' not in config.keys():
+        try:
+            tr_mean = config['bf_norm_val']
+        except KeyError:
+            tr_mean = 1.0
     if len(tr_peaks_only) >= 1:
         groups = group_values(tr_peaks_only, bias)
-        vals = [np.mean(gr)-tr_mean for gr in groups]
+        vals = []
+        for gr in groups:
+            pt = np.mean(gr)
+            if norm: pt -= tr_mean
+            vals.append(pt)
         return vals
-    return [0.0]
+    return [np.mean(trace)-tr_mean]

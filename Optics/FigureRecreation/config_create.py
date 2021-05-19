@@ -56,13 +56,17 @@ config = {
     'vis_vlines':True,          #plot vertical lines for known points in swspace
     'vis_showbfs':False,        #plot the points with detected bifurcations
     'vis_fimage':False,         #show the frequency waterfall under the diagram
+    'vbounds':1.3,              #plus/minus the central point for the v bounds
+    'vis_h':9,                  #the size of the figure (inches)
+    'vis_v':12,
     'bf_plot_num': 1,           #how many plots to make for bf diagrams
     'bf_plot_id': 1             #which results of a multi-result plot is this?
 }
 
 optional_params = ['desc', 'enc', 'root_dir', 'gamma_r', 'omega_r',
                    'eta_FH', 'eta_RH', 'bf_plot_id', 'bf_norm', 'bf_cnb',
-                   'mode','vis_type', 'ez_name', 'vis_fimage', 'vis_showbfs']
+                   'mode','vis_type', 'ez_name', 'vis_fimage', 'vis_showbfs',
+                   'vbounds', 'vis_h', 'vis_v']
 required_params = ['E_0','theta_0','N_0','alpha','eta','P','DELTA','T',
                    'tau_p','tau_c','model','model_shortname','bf_reverse',
                    'bf_continuation','llsim','ulsim','sim_step','llcyc',

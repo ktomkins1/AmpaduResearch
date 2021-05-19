@@ -124,7 +124,7 @@ def general_sweep(results, setup, c, sweep_key, sweep_space, axis_gen=np.linspac
         freqs[n], faxis = freq_analysis_trace(f_out, t[c['llcyc']:c['ulcyc']], 1.0)
 
         #Find all local minima and maxima and add them to the bifurcation diagrm
-        bfdiag_points[n] = get_extrema(f_out, c['ex_bias'])
+        bfdiag_points[n] = get_extrema(f_out, c)
     print('Sweep of var {0} complete'.format(sweep_key))
     r = {'axis':sweep_values, 'groups':bfdiag_points, 'fr':freqs, 'fx':faxis}
     for k in r.keys(): results[k] = r[k]

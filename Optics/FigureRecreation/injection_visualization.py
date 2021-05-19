@@ -74,7 +74,12 @@ def plot_bif_diag(results, value_name, config, save_loc, override_fig=None, over
         pass
 
     if type(override_fig) is type(None) and type(override_ax) is type(None):
-        fig = figmod.Figure(figsize=(12, 9))
+        vsize, hsize = 9, 12
+        try:
+            vsize, hsize = config['vis_v'], config['vis_h']
+        except KeyError:
+            vsize, hsize = 9, 12
+        fig = figmod.Figure(figsize=(hsize, vsize))
         ax = fig.add_axes([0.05, 0.075, 0.9, 0.85])
         fig.suptitle("Bifurcation analysis of {} from {} to {} (n={})\n".format(
                         value_name,
@@ -107,6 +112,7 @@ def plot_bif_diag(results, value_name, config, save_loc, override_fig=None, over
         ax.set_yticks(yticks)
         ax.set_yticklabels(np.round(bf_range[yticks],3))
     else:
+<<<<<<< HEAD
         zo = 0
         try:
             if config['vis_fimage']:
@@ -140,6 +146,13 @@ def plot_bif_diag(results, value_name, config, save_loc, override_fig=None, over
         except KeyError as ke:
             print('did not show waterfall: ' + str(ke))
         zo += 1
+=======
+        try:
+            ax.set_ybound(lower=-config['vbounds'], upper=config['vbounds'])
+            ax.set_autoscaley_on(False)
+        except KeyError:
+            pass
+>>>>>>> 258379bbc050d3136e65dc9f70b2d48216a71b82
         for n, v in enumerate(xaxis):
             for pt in bfdiag_points[n]:
                 if config['bf_absv']: pt = np.abs(pt)
