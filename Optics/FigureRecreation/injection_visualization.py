@@ -107,27 +107,64 @@ def plot_bif_diag(results, value_name, config, save_loc, override_fig=None, over
         ax.set_yticks(yticks)
         ax.set_yticklabels(np.round(bf_range[yticks],3))
     else:
+        zo = 0
+        try:
+            if config['vis_fimage']:
+                #try to get frequency results out
+                freqs_raw = np.abs(results['fr'])
+                fr_axis = results['fx']
+                hm = np.log10(freqs_raw.T + 0.001)
+
+                #get the bounds to make it the right size
+                xlen = len(xaxis)
+                if xlen <  500: xlen = 500
+                ylen = config['ulcyc'] - config['llcyc']
+
+                #plot it as an image in the zo^th z plane
+                zo += 1
+                ax.imshow(hm, extent=(-0.5, xlen-0.5, ylen-0.5, -0.5), zorder=zo)
+
+                #get the axis titles for the frequency yaxis, the extrema y axis and the sweep axis
+                #frequency
+                transform = lambda x: x
+                ax_y2 = ax.secondary_yaxis('right', functions=(transform, transform))
+                #extrema
+                bf_range, _, _ = convert_bf_to_array(bfdiag_points)
+                yticks = list(range(0, ylen, round(0.15*ylen)))
+                ax.set_yticks(yticks)
+                ax.set_yticklabels(list(np.round(np.linspace(max(bf_range), min(bf_range), len(yticks)),2)))
+                #sweep
+                xticks = list(range(0, xlen, round(0.6*len(xaxis))))
+                ax.set_xticks(xticks)
+                ax.set_xticklabels(list(np.round(np.linspace(xaxis[0], xaxis[-1], len(xticks)),4)))
+        except KeyError as ke:
+            print('did not show waterfall: ' + str(ke))
+        zo += 1
         for n, v in enumerate(xaxis):
             for pt in bfdiag_points[n]:
                 if config['bf_absv']: pt = np.abs(pt)
-                ax.scatter(v, pt, s=1, c=our_color)#, marker=',')
+                ax.scatter(v, pt, zorder=zo, s=1, c=our_color)#, marker=',')
 
     ax.set_xlabel(value_name)
     ax.set_ylabel('Amplitude Extrema')
 
-    for bx, by in bifurcations:
-        ax.scatter(bx, by, color='r')
+    try:
+        if config['vis_showbfs']:
+            for bx, by in bifurcations:
+                ax.scatter(bx, by, color='r')
+    except KeyError:
+        pass
 
     #try to plot lines for the hopfs
     try:
-        if value_name == 'eta':
-            eta_FH = config['eta_FH']
+        if value_name == 'eta' and config['vis_vlines']:
+            eta_FH = float(config['eta_FH'])
             if min(xaxis) < eta_FH < max(xaxis):
                 ax.axvline(eta_FH)
-            eta_RH = config['eta_RH']
+            eta_RH = float(config['eta_RH'])
             if min(xaxis) < eta_RH < max(xaxis):
                 ax.axvline(eta_RH)
-    except Exception as e:
+    except KeyError:
         print('hopf rev or fwd not present')
 
 
@@ -136,7 +173,7 @@ def plot_bif_diag(results, value_name, config, save_loc, override_fig=None, over
         os.makedirs(all_pics_folder, exist_ok=True)
         local_fstring = 'result_figure{}.png'.format(config['bf_plot_id'])
         global_fstring = config['desc'] + '_' + str(config['bf_plot_id']) + '.png'
-        for fname in [os.path.join(save_loc, local_fstring), 
+        for fname in [os.path.join(save_loc, local_fstring),
                       os.path.join(all_pics_folder, global_fstring)]:
             fig.savefig(fname, dpi=our_dpi)
     if get_fig:
@@ -203,13 +240,23 @@ def get_fit(axis, bfdiag_points):
     return pts(axis)
 
 
-def plot_waterfall(e_values, freqs):
+def plot_waterfall(axis, freqs, config, skey):
     fig, ax = plt.subplots()
     ax.set_title('Frequency Analisys')
-    ax.pcolormesh(freqs.T, cmap='hot')
-    ax.set_xticks(e_values)
-    ax.set_xlabel('Eta')
-    return plt.show
+    #ax.pcolormesh(np.log10(freqs.T), cmap='hot')
+    ax.imshow(np.log10(freqs.T), cmap='hot')
+    ax.set_xticks(axis)
+    ax.set_xlabel(skey)
+    save_loc = config['targetdir']
+    all_pics_folder = os.path.join(config['root_dir'], 'freq_pics')
+    os.makedirs(all_pics_folder, exist_ok=True)
+    local_fstring = 'freq_figure{}.png'.format(config['bf_plot_id'])
+    global_fstring = config['desc'] + '_' + str(config['bf_plot_id']) + '.png'
+    for fname in [os.path.join(save_loc, local_fstring),
+                  os.path.join(all_pics_folder, global_fstring)]:
+        fig.savefig(fname)
+    #return plt.show
+    return
 
 def get_param_description(c):
     desc = ''

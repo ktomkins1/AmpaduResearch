@@ -28,7 +28,7 @@ def bf_dispatch(setup, config):
         skey = detect_sweep_key(config)
         sweep = dict(config[skey]) #copying should not matter, but well whatever
         sweep_params = list(sweep.values())[0]
-        
+
         if skey == 'eta':
             bfd.get_FRDPs(config)
             bfd.get_fwd_rev_hopf(config)
@@ -41,13 +41,13 @@ def bf_dispatch(setup, config):
         if rnmode == 'exp1':
             rn = sim.get_exponential_axis
         if rnmode == 'percent':
-            if skey not in cc.pct_axis_support: 
+            if skey not in cc.pct_axis_support:
                 raise ValueError("initiation.py: Attempting to use pct axis on {1}".format(skey))
             rn = sim.get_pct_bounds_axis
             sweep_params = [np.real(config['eta_FH']), np.real(config['eta_RH'])] + sweep_params
 
-        results['axis'], results['groups'], results['fr'] = sim.general_sweep(
-                setup, config, skey, sweep_params, rn
+        sim.general_sweep(
+                results, setup, config, skey, sweep_params, rn
             )
         if 'bf_cnb' in config.keys():
             bfd.get_cnb_from_groups(results, config['bf_cnb'])
@@ -57,6 +57,7 @@ def bf_dispatch(setup, config):
 
     #create new directory for storing these results
     targetdir = os.path.join(config['root_dir'], config['desc'])
+    config['targetdir'] = targetdir
     os.makedirs(targetdir, exist_ok=True)
 
     #copy results into the new directory
@@ -67,7 +68,7 @@ def bf_dispatch(setup, config):
     for k in config.keys():
         val = config[k]
         if type(val) in [complex, np.complex128]:
-            config[k] = str(val)
+            config[k] = val.real
     try:
         with open(os.path.join(targetdir, 'config.json'), 'w+') as f:
             json.dump(config, f)
@@ -76,6 +77,7 @@ def bf_dispatch(setup, config):
 
     #save images of results
     vis.plot_bif_diag(results, skey, config, targetdir)
+    #vis.plot_waterfall(results['axis'], results['fr'], config, skey)
 
 def dispatch_saved(fname, config):
     with open(fname, 'rb') as f:
@@ -102,7 +104,7 @@ def enumerate_configs(c):
             c['bf'] += 1
 
     clist = enumerate_configs_r(c, ekeys)
-                
+
     clist_ = []
     for c in clist:
         clist_ += split_config_by_plots(c)
@@ -113,14 +115,14 @@ def enumerate_configs(c):
 def enumerate_configs_r(c, ekeys):
     if ekeys == []:
         return [c.copy()]
-    
+
     clist = []
     for item in c[ekeys[0]]:
         d = c.copy()
         d[ekeys[0]] = item
         clist += enumerate_configs_r(d, ekeys[1:])
     return clist
-            
+
 def clean_config(c):
     for k in c.keys():
         if k in cc.known_str_params: continue
@@ -143,7 +145,7 @@ def split_config_by_plots(c):
     llim, ulim, dsweep = list(c[skey].values())[0]
 
     stype = list(c[skey].keys())[0]
-    if stype not in ['arange', 'linspace']: 
+    if stype not in ['arange', 'linspace']:
         raise NotImplementedError("Cannot use multiplotting with '{}' axis gen".format(stype))
     if stype == 'linspace':
         #convert to arange

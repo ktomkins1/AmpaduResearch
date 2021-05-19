@@ -52,19 +52,22 @@ config = {
     'bf_fit_line':False,        #plot line of best fit
     'vis_show':False,           #show the plot using plt runtime. DNU with MT
     'vis_save':True,            #save the plot as a picture
-    'vis_type':'scatter',
+    'vis_type':'scatter',       #plot as a scatter, line, image, etc.
+    'vis_vlines':True,          #plot vertical lines for known points in swspace
+    'vis_showbfs':False,        #plot the points with detected bifurcations
+    'vis_fimage':False,         #show the frequency waterfall under the diagram
     'bf_plot_num': 1,           #how many plots to make for bf diagrams
     'bf_plot_id': 1             #which results of a multi-result plot is this?
 }
 
-optional_params = ['desc', 'enc', 'root_dir', 'gamma_r', 'omega_r', 
+optional_params = ['desc', 'enc', 'root_dir', 'gamma_r', 'omega_r',
                    'eta_FH', 'eta_RH', 'bf_plot_id', 'bf_norm', 'bf_cnb',
-                   'mode','vis_type', 'ez_name']
+                   'mode','vis_type', 'ez_name', 'vis_fimage', 'vis_showbfs']
 required_params = ['E_0','theta_0','N_0','alpha','eta','P','DELTA','T',
                    'tau_p','tau_c','model','model_shortname','bf_reverse',
                    'bf_continuation','llsim','ulsim','sim_step','llcyc',
                    'ulcyc','ex_bias','bf_absv','bf_fit_line',
-                   'vis_save','vis_show', 'bf_plot_num']
+                   'vis_save','vis_show', 'vis_vlines', 'bf_plot_num']
 known_str_params = ['desc', 'enc', 'root_dir', 'model','mode',
                     'model_shortname', 'vis_type', 'ez_name']
 #known_modes = ['auto', 'single', 'bif', 'multi', 'stability']
@@ -104,7 +107,7 @@ def fix_config(c):
             print('Configuration Malformed. missing: {}'.format(k))
     set_mode(c)
     c['enc'] = encode_config_hash(c)
-    if c['bf_plot_num'] > 1 : return  #a (perhaps hackey) way of making many plots have same description
+    if c['bf_plot_num'] > 1 : return  #make many plots have same description
     c['bf_plot_id'] = 0
     c['desc'] = create_short_desc(c)
 
