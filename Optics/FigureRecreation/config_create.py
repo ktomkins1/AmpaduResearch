@@ -53,13 +53,16 @@ config = {
     'vis_show':False,           #show the plot using plt runtime. DNU with MT
     'vis_save':True,            #save the plot as a picture
     'vis_type':'scatter',
+    'vbounds':1.3,              #plus/minus the central point for the v bounds
+    'vis_h':9,                  #the size of the figure (inches)
+    'vis_v':12,
     'bf_plot_num': 1,           #how many plots to make for bf diagrams
     'bf_plot_id': 1             #which results of a multi-result plot is this?
 }
 
 optional_params = ['desc', 'enc', 'root_dir', 'gamma_r', 'omega_r', 
                    'eta_FH', 'eta_RH', 'bf_plot_id', 'bf_norm', 'bf_cnb',
-                   'mode','vis_type', 'ez_name']
+                   'mode','vis_type', 'ez_name', 'vbounds', 'vis_h', 'vis_v']
 required_params = ['E_0','theta_0','N_0','alpha','eta','P','DELTA','T',
                    'tau_p','tau_c','model','model_shortname','bf_reverse',
                    'bf_continuation','llsim','ulsim','sim_step','llcyc',
