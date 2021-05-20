@@ -48,7 +48,10 @@ def simulate_functions(initial_values, funcs, ll, ul, step=1.0, tol=None):
 '''
 def freq_analysis_trace(trace, time_trace, dt):
     ftrace = np.abs(np.fft.fftshift(np.fft.fft(trace)))
-    ftrace[round(len(ftrace)/2)] -= len(trace)
+    ftrace[round(len(ftrace)/2)] = np.mean(ftrace)
+    if True:
+        ftrace -= min(ftrace)
+        ftrace = ftrace/max(ftrace)
     freqs = np.fft.fftshift(np.fft.fftfreq(len(time_trace), dt))
     return ftrace, freqs
 

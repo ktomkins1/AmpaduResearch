@@ -37,6 +37,7 @@ def get_extrema(trace, config):
             tr_mean = config['bf_norm_val']
         except KeyError:
             tr_mean = 1.0
+            config['bf_norm_val'] = tr_mean
     if len(tr_peaks_only) >= 1:
         groups = group_values(tr_peaks_only, bias)
         vals = []
@@ -45,4 +46,7 @@ def get_extrema(trace, config):
             if norm: pt -= tr_mean
             vals.append(pt)
         return vals
-    return [np.mean(trace)-tr_mean]
+    if norm:
+        return [np.mean(trace)-tr_mean]
+    else:
+        return [tr_mean]
