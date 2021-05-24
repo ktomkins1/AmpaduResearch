@@ -20,6 +20,8 @@ from multiprocessing import Process, cpu_count
 #TODO: dynamically import from config
 import models.model_psi_v2 as model
 
+current_cid = 0
+
 def bf_dispatch(setup, config):
     clean_config(config) #finalize config after splitting into multiple dicts
     results = {}
@@ -114,7 +116,10 @@ def enumerate_configs(c):
 
 def enumerate_configs_r(c, ekeys):
     if ekeys == []:
-        return [c.copy()]
+        d = c.copy()
+        current_cid += 1
+        d['c_id'] = current_cid
+        return [d]
 
     clist = []
     for item in c[ekeys[0]]:
@@ -212,6 +217,7 @@ if __name__ == '__main__':
     if args.ezname:
         config['ez_name'] = args.ezname
         foldername = config['ez_name']
+
     #create folder under results
     results_dirname = os.path.join('results', foldername)
     os.makedirs(results_dirname, exist_ok=True)

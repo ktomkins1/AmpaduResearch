@@ -14,7 +14,9 @@ from hashlib import blake2b
 #string options should use c[<key>] if wanting to refer to variable <key>
 #   for example, if refering to P in order to create E_0, use c[P]
 config = {
-    #parameters of the system
+    'c_id': 0,                  #which config in a multiconfig
+
+    #parameters of the dynamical system
     'E_0':'np.sqrt(c[\'P\'])',  #initial e-field
     'theta_0':0.0,              #initial phase difference
     'N_0':0.0,                  #initial carrier density
@@ -70,7 +72,7 @@ optional_params = ['desc', 'enc', 'root_dir', 'gamma_r', 'omega_r',
 required_params = ['E_0','theta_0','N_0','alpha','eta','P','DELTA','T',
                    'tau_p','tau_c','model','model_shortname','bf_reverse',
                    'bf_continuation','llsim','ulsim','sim_step','llcyc',
-                   'ulcyc','ex_bias','bf_absv','bf_fit_line',
+                   'ulcyc','ex_bias','bf_absv','bf_fit_line', 'c_id',
                    'vis_save','vis_show', 'vis_vlines', 'bf_plot_num']
 known_str_params = ['desc', 'enc', 'root_dir', 'model','mode',
                     'model_shortname', 'vis_type', 'ez_name']
@@ -96,6 +98,13 @@ def create_short_desc(c, sep='-'):
     r, cnt = c['bf_reverse'], c['bf_continuation']
     if r or cnt:
         desc += sep + r*'r' + cnt*'c'
+
+    desc += sep + str(c['c_id'])
+    try:
+        plot_id_str = '-' + c['bf_plot_id']
+        desc += plot_id_str
+    except KeyError:
+        pass
 
     return desc.replace(' ', '').replace('.', '_')
 
