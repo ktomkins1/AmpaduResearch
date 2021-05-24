@@ -176,10 +176,10 @@ def plot_bif_diag(results, value_name, config, save_loc, override_fig=None, over
         d = config['vbounds']['+-']
         ax.set_ybound(lower=c-d, upper=c+d)
     
-    print('xlim: ' + str(ax.get_xlim()))
-    print('ylim: ' + str(ax.get_ylim()))
-    print('xbound: ' + str(ax.get_xbound()))
-    print('ybound: ' + str(ax.get_ybound()))
+    #print('xlim: ' + str(ax.get_xlim()))
+    #print('ylim: ' + str(ax.get_ylim()))
+    #print('xbound: ' + str(ax.get_xbound()))
+    #print('ybound: ' + str(ax.get_ybound()))
 
     ax.set_xlabel(value_name)
     ax.set_ylabel('Amplitude Extrema')
