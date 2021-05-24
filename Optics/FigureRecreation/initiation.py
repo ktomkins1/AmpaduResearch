@@ -136,7 +136,10 @@ def clean_config(c):
     cc.fix_config(c)
 
 def detect_sweep_key(c):
-    return [s for s in c.keys() if type(c[s]) is dict][0]
+    for s in c.keys():
+        if s in cc.known_dict_params: continue
+        if type(c[s]) is dict: return s
+    return None
 
 def split_config_by_plots(c):
     num = c['bf_plot_num']

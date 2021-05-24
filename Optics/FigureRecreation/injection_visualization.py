@@ -49,6 +49,8 @@ def plot_limit_cycle(trace1, trace2, name1, name2):
     axes.set_ylabel(name2)
     return plt.show
 
+
+#TODO: Modularity...
 '''
     Based on bifurcation analysis, plot all points
 
@@ -80,7 +82,7 @@ def plot_bif_diag(results, value_name, config, save_loc, override_fig=None, over
             vsize, hsize = config['vis_v'], config['vis_h']
         except KeyError:
             vsize, hsize = 9, 12
-        fig = figmod.Figure(figsize=(vsize, hsize))
+        fig = figmod.Figure(figsize=(hsize, vsize))
         ax = fig.add_axes([0.05, 0.075, 0.9, 0.85])
         fig.suptitle("Bifurcation analysis of {} from {} to {} (n={})\n".format(
                         value_name,
@@ -92,95 +94,92 @@ def plot_bif_diag(results, value_name, config, save_loc, override_fig=None, over
     our_dpi = 500
     xpix, ypix = hsize*our_dpi, vsize*our_dpi
 
-    vis_type = 'scatter'
-    if 'vis_type' in config.keys():
-        vis_type = config['vis_type']
 
-    if vis_type != 'scatter':
-        bf_range, image, xlen = convert_bf_to_array(bfdiag_points)
-        xaxis = np.linspace(min(xaxis), max(xaxis), xlen)
+    zo = 0
+    
+    try:
+        if config['vis_fimage']:
+            #try to get frequency results out
+            freqs_raw = np.abs(results['fr'])
+            fr_axis = results['fx']
+            hm = np.log10(freqs_raw.T + 0.001)
 
-        ax.plot(xaxis, np.ones_like(xaxis)*max(bf_range))
-        ax.plot(xaxis, np.ones_like(xaxis)*min(bf_range))
+            #get the bounds to make it the right size
+            xlen = len(xaxis)
+            ylen = config['ulcyc'] - config['llcyc']
+            if xlen < ylen: xlen = ylen
 
-        ax.imshow(image, cmap='binary', aspect='auto', interpolation='none')
-        #fig.figimage(image*255, xo=int(0.05*xpix), yo=int(0.075*ypix), cmap='binary')
-        xticks = list(np.linspace(0, len(xaxis)-1, 20, dtype=int))
-        ax.set_xticks(xticks)
-        ax.set_xticklabels(np.round(xaxis[xticks],3))
+            #get extrema range
+            bf_range, _, _ = convert_bf_to_array(bfdiag_points)
+            #ymin = min(bf_range)
+            #ymax = max(bf_range)
+            ymin, ymax = ax.get_ybound()
+            yspan = ymax-ymin
+            ypt = yspan/(ymax*100)
 
-        yticks = list(np.linspace(0, len(bf_range)-1, 20, dtype=int))
-        ax.set_yticks(yticks)
-        ax.set_yticklabels(np.round(bf_range[yticks],3))
-    else:
-        zo = 0
-        ax.set_xbound(lower=min(xaxis), upper=max(xaxis))
+            #sweep range
+            xmin = min(xaxis)
+            xmax = max(xaxis)
+            xspan = xmax-xmin
+            xpt = xspan/(xmax*100)
+
+            #ax.set_xlim(xmin=xmin, xmax=xmax)
+            #ax.set_ylim(ymin=ymin, ymax=ymax)
+
+            #plot it as an image in the zo^th z plane
+            zo += 1
+            ax.imshow(hm, extent=(xmin-0.5*xpt, xmax-0.5*xpt, ymax-0.5*ypt, ymin-0.5*ypt), zorder=1)
+            print('xlim: ' + str(ax.get_xlim()))
+            print('ylim: ' + str(ax.get_ylim()))
+            print('xbound: ' + str(ax.get_xbound()))
+            print('ybound: ' + str(ax.get_ybound()))
+
+            #set the axis titles for the frequency yaxis, the extrema y axis and the sweep axis
+            #frequency
+            transform = lambda x: np.round(x - ylen/2)
+            ax_y2 = ax.secondary_yaxis('right', functions=(transform, transform))
+            #extrema
+            yticks = list(range(0, ylen, round(0.15*ylen)))
+            ylist = np.round(np.linspace(ymin,ymax, ylen),2)
+            ax.set_yticks(yticks)
+            ax.set_yticklabels(ylist[yticks])
+            #sweep
+            xticks = list(range(0, xlen, round(0.2*xlen)))
+            ax.set_xticks(xticks)
+            ax.set_xticklabels(list(np.round(np.linspace(xaxis[0], xaxis[-1], len(xticks)),4)))
+            ax.tick_params('x', labelrotation=-90.0)
+            
+    except KeyError as ke:
+        print('did not show waterfall: ' + str(ke))
+        
+    zo += 1
+    for n, v in enumerate(xaxis):
+        for pt in bfdiag_points[n]:
+            if config['bf_absv']: pt = np.abs(pt)
+            ax.scatter(v, pt, zorder=2, s=1, c=our_color)#, marker=',')
+    
+    ax.set_xbound(lower=min(xaxis), upper=max(xaxis))
+    vmode = 0
+    try:
+        vmode = config['vbounds']['mode']
+    except KeyError:
+        pass
+    if vmode == 1:
+        ax.set_ybound(lower=config['vbounds']['al'], 
+                      upper=config['vbounds']['au'])
+    if vmode == 2:
+        #offset mode. offset has already been modified based on normalization
         try:
-            ax.set_ybound(lower=config['vbound1'], upper=config['vbound2'])
-            ax.set_autoscaley_on(False)
+            c = config['vbounds']['o']
         except KeyError:
-            pass
-        try:
-            if config['vis_fimage']:
-                #try to get frequency results out
-                freqs_raw = np.abs(results['fr'])
-                fr_axis = results['fx']
-                hm = np.log10(freqs_raw.T + 0.001)
-
-                #get the bounds to make it the right size
-                xlen = len(xaxis)
-                ylen = config['ulcyc'] - config['llcyc']
-                if xlen < ylen: xlen = ylen
-
-                #get extrema range
-                bf_range, _, _ = convert_bf_to_array(bfdiag_points)
-                #ymin = min(bf_range)
-                #ymax = max(bf_range)
-                ymin, ymax = ax.get_ybound()
-                yspan = ymax-ymin
-                ypt = yspan/(ymax*100)
-
-                #sweep range
-                xmin = min(xaxis)
-                xmax = max(xaxis)
-                xspan = xmax-xmin
-                xpt = xspan/(xmax*100)
-
-                #ax.set_xlim(xmin=xmin, xmax=xmax)
-                #ax.set_ylim(ymin=ymin, ymax=ymax)
-
-                #plot it as an image in the zo^th z plane
-                zo += 1
-                ax.imshow(hm, extent=(xmin-0.5*xpt, xmax-0.5*xpt, ymax-0.5*ypt, ymin-0.5*ypt), zorder=1)
-                print('xlim: ' + str(ax.get_xlim()))
-                print('ylim: ' + str(ax.get_ylim()))
-                print('xbound: ' + str(ax.get_xbound()))
-                print('ybound: ' + str(ax.get_ybound()))
-
-                #set the axis titles for the frequency yaxis, the extrema y axis and the sweep axis
-                #frequency
-                transform = lambda x: np.round(x - ylen/2)
-                ax_y2 = ax.secondary_yaxis('right', functions=(transform, transform))
-                #extrema
-                yticks = list(range(0, ylen, round(0.15*ylen)))
-                ylist = np.round(np.linspace(ymin,ymax, ylen),2)
-                ax.set_yticks(yticks)
-                ax.set_yticklabels(ylist[yticks])
-                #sweep
-                xticks = list(range(0, xlen, round(0.2*xlen)))
-                ax.set_xticks(xticks)
-                ax.set_xticklabels(list(np.round(np.linspace(xaxis[0], xaxis[-1], len(xticks)),4)))
-                ax.tick_params('x', labelrotation=-90.0)
-
-#                ax.set_xlim(xmin=xmin, xmax=xmax)
-#                ax.set_ylim(ymin=ymin, ymax=ymax)
-        except KeyError as ke:
-            print('did not show waterfall: ' + str(ke))
-        zo += 1
-        for n, v in enumerate(xaxis):
-            for pt in bfdiag_points[n]:
-                if config['bf_absv']: pt = np.abs(pt)
-                ax.scatter(v, pt, zorder=2, s=1, c=our_color)#, marker=',')
+            c = 0
+        d = config['vbounds']['+-']
+        ax.set_ybound(lower=c-d, upper=c+d)
+    
+    #print('xlim: ' + str(ax.get_xlim()))
+    #print('ylim: ' + str(ax.get_ylim()))
+    #print('xbound: ' + str(ax.get_xbound()))
+    #print('ybound: ' + str(ax.get_ybound()))
 
     ax.set_xlabel(value_name)
     ax.set_ylabel('Amplitude Extrema')

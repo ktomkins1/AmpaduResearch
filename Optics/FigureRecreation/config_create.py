@@ -58,9 +58,9 @@ config = {
     'vis_vlines':True,          #plot vertical lines for known points in swspace
     'vis_showbfs':False,        #plot the points with detected bifurcations
     'vis_fimage':False,         #show the frequency waterfall under the diagram
-    'vbounds':1.3,              #plus/minus the central point for the v bounds
-    'vis_h':9,                  #the size of the figure (inches)
-    'vis_v':12,
+    'vbounds':{'mode':2, '+-':1.0}, #y bounds instructions
+    'vis_h':12,                  #the size of the figure (inches)
+    'vis_v':9,
     'bf_plot_num': 1,           #how many plots to make for bf diagrams
     'bf_plot_id': 1             #which results of a multi-result plot is this?
 }
@@ -76,6 +76,13 @@ required_params = ['E_0','theta_0','N_0','alpha','eta','P','DELTA','T',
                    'vis_save','vis_show', 'vis_vlines', 'bf_plot_num']
 known_str_params = ['desc', 'enc', 'root_dir', 'model','mode',
                     'model_shortname', 'vis_type', 'ez_name']
+
+# vbounds notes: 
+#mode 0: no bounds enforce
+#mode 1: 'au': absolute upper, 'al': absolute lower
+#mode 2: '+-' is the boundaries, 'o' is optional and is the offset
+known_dict_params = ['vbounds']
+
 #known_modes = ['auto', 'single', 'bif', 'multi', 'stability']
 implemented_modes = ['bif']
 axis_mode_support = ['linspace', 'arange', 'exp', 'percent']
@@ -127,7 +134,8 @@ def fix_config(c):
 def set_mode(c):
     listcnt, dictcnt = 0,0
     for k in c.keys():
-        if type(c[k]) == type({}): dictcnt += 1
+        if type(c[k]) == type({}):
+            if k not in known_dict_params: dictcnt += 1
         if type(c[k]) == type([]): listcnt += 1
 
     if dictcnt == 0: c['mode'] = 'single'

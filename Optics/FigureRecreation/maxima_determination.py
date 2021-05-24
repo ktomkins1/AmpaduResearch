@@ -28,7 +28,11 @@ def group_values(y, bias):
 '''
 def get_extrema(trace, config):
     bias = config['ex_bias']
-    norm = config['bf_norm']
+    norm = False
+    try:
+        norm = config['bf_norm']
+    except KeyError:
+        pass
     tr_peaks_only = list(trace[find_peaks(trace)[0]])
     tr_peaks_only += list(trace[find_peaks(-trace)[0]])
     tr_mean = np.mean(np.convolve(trace, [0.2, 0.2, 0.2, 0.2, 0.2], mode='same'))
@@ -38,6 +42,11 @@ def get_extrema(trace, config):
         except KeyError:
             tr_mean = 1.0
             config['bf_norm_val'] = tr_mean
+            #TODO: Update bf_norm_type
+    try:
+        config['vbounds']['o'] -= tr_mean
+    except KeyError:
+        pass
     if len(tr_peaks_only) >= 1:
         groups = group_values(tr_peaks_only, bias)
         vals = []
