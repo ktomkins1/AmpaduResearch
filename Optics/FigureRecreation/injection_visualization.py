@@ -3,33 +3,7 @@ import matplotlib.figure as figmod
 import numpy as np
 import os
 
-'''
-    Create a plot for each of the associated traces in a list
 
-    parameters:
-    traces - list of n traces
-    time_trace - time steps to plot against
-    trace_names - list of names, one for each of n traces
-    title - title of the plot
-    Ebounds - for any traces appearing to be E-fields, the amplitude bounds
-'''
-def plot_n_traces(traces, time_trace, trace_names, title, Ebounds=[-1.0,1.5]):
-    num_traces = len(traces)
-
-    fig, axes = plt.subplots(num_traces,1,sharex='col')
-    fig.suptitle(title)
-
-    for k in range(num_traces):
-        ax = axes[k]
-        name = trace_names[k]
-        if k == num_traces-1:
-            ax.set_xlabel("Normalized Time")
-        ax.set_ylabel(name)
-        ax.plot(time_trace, traces[k])
-        if name[0] == 'E':
-            # this is an E trace so use the bounds
-            ax.set_ybound(lower=Ebounds[0], upper=Ebounds[1])
-    return plt.show
 '''
     Plot one trace against another - useful for limit cycles
 
@@ -96,7 +70,7 @@ def plot_bif_diag(results, value_name, config, save_loc, override_fig=None, over
 
 
     zo = 0
-    
+
     try:
         if config['vis_fimage']:
             #try to get frequency results out
@@ -148,34 +122,40 @@ def plot_bif_diag(results, value_name, config, save_loc, override_fig=None, over
             ax.set_xticks(xticks)
             ax.set_xticklabels(list(np.round(np.linspace(xaxis[0], xaxis[-1], len(xticks)),4)))
             ax.tick_params('x', labelrotation=-90.0)
-            
+
     except KeyError as ke:
         print('did not show waterfall: ' + str(ke))
-        
+
     zo += 1
     for n, v in enumerate(xaxis):
         for pt in bfdiag_points[n]:
             if config['bf_absv']: pt = np.abs(pt)
             ax.scatter(v, pt, zorder=2, s=1, c=our_color)#, marker=',')
-    
+
     ax.set_xbound(lower=min(xaxis), upper=max(xaxis))
+    try:
+        print("c is {}".format(c))
+    except Exception:
+        print("c not defined")
     vmode = 0
     try:
         vmode = config['vbounds']['mode']
     except KeyError:
         pass
     if vmode == 1:
-        ax.set_ybound(lower=config['vbounds']['al'], 
+        ax.set_ybound(lower=config['vbounds']['al'],
                       upper=config['vbounds']['au'])
     if vmode == 2:
         #offset mode. offset has already been modified based on normalization
+        c = 0
         try:
             c = config['vbounds']['o']
         except KeyError:
             c = 0
         d = config['vbounds']['+-']
+        print("c is {}".format(c))
         ax.set_ybound(lower=c-d, upper=c+d)
-    
+
     #print('xlim: ' + str(ax.get_xlim()))
     #print('ylim: ' + str(ax.get_ylim()))
     #print('xbound: ' + str(ax.get_xbound()))
@@ -304,6 +284,70 @@ def get_param_description(c):
             desc += sstr + str(descvals[i])
 
     return desc
+
+'''
+    Get the number of traces and their names from the configuration
+'''
+def get_num_traces(ys, config):
+    #The dictionary for relating ys index to which trace in tr_names
+    #TODO: generalize better (theta_0)
+    ixd = {'E_0':0, 'theta_0':1, 'N_0':2, 'E_1':1, 'N_1':4}
+
+    tr_names = config['tr_names'].keys()
+    num_traces = len(tr_names)
+    trace_names = list(config['tr_names'].values())
+    traces = [ys[ixd[name]] for name in tr_names]
+
+    return num_traces, trace_names, traces
+
+'''
+    Create a plot for each of the associated traces in results
+'''
+def plot_n_traces(results, config):
+    num_traces, trace_names, traces = get_num_traces(results['ys'], config)
+
+    axis_t = results['axis']
+
+    vsize, hsize = 9, 12
+    try:
+        vsize, hsize = config['vis_v'], config['vis_h']
+    except KeyError:
+        pass
+
+    fig, axes = plt.subplots(num_traces,1,sharex='col', figsize=(hsize, vsize))
+    title = 'Single Analysis with n={}'.format(len(axis_t))
+    title += '\n' + get_param_description(config)
+    fig.suptitle(title)
+
+    window = slice(None, None)
+    try:
+        if config['tr_window']:
+            window = slice(config['llcyc'], config['ulcyc'])
+    except KeyError:
+        pass
+
+    for k in range(num_traces):
+        ax = axes[k]
+        name = trace_names[k]
+        if k == num_traces-1:
+            ax.set_xlabel("Normalized Time")
+        ax.set_ylabel(name)
+        ax.plot(axis_t[window], traces[k][window])
+
+    #TODO: ybounds
+
+    if config['vis_save']:
+        all_pics_folder = os.path.join(config['root_dir'], 'all_pics')
+        os.makedirs(all_pics_folder, exist_ok=True)
+        local_fstring = 'result_figure{}.png'.format(config['bf_plot_id'])
+        global_fstring = config['desc'] + '_' + str(config['bf_plot_id']) + '.png'
+        for fname in [os.path.join(config['targetdir'], local_fstring),
+                      os.path.join(all_pics_folder, global_fstring)]:
+            fig.savefig(fname)
+
+    if config['vis_show']:
+        return plt.show
+    #TODO: a lot of this code is written twice now, and has dead functionality
 
 if __name__ == '__main__':
     #TODO: open a pickled data_set to plot

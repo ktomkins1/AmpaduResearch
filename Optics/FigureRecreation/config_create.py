@@ -15,6 +15,8 @@ from hashlib import blake2b
 #   for example, if refering to P in order to create E_0, use c[P]
 config = {
     'c_id': 0,                  #which config in a multiconfig
+    'c_mode':0,                 #0 to match all list params by length
+                                #1 to match by nxnxnx...
 
     #parameters of the dynamical system
     'E_0':'np.sqrt(c[\'P\'])',  #initial e-field
@@ -41,6 +43,9 @@ config = {
     'bf_cnb':0.1,              #bias for determining a bifurcation has occurred
     'bf_norm':True,            #save the extrema wrt 0 instead of strictly > 0
 
+    #parameter for single time series
+    'tr_names': {'E_0':'Electric Field', 'theta_0':'Frequency Offset'},
+
     #parameters of the simulator
     'llsim':0,              #the beginning time point?
     'ulsim':6000,           #end the simulator after this many points
@@ -62,13 +67,14 @@ config = {
     'vis_h':12,                  #the size of the figure (inches)
     'vis_v':9,
     'bf_plot_num': 1,           #how many plots to make for bf diagrams
-    'bf_plot_id': 1             #which results of a multi-result plot is this?
+    'bf_plot_id': 0,            #which results of a multi-result plot is this?
+    'tr_window': True           #Show only the window taken into the trace
 }
 
 optional_params = ['desc', 'enc', 'root_dir', 'gamma_r', 'omega_r',
                    'eta_FH', 'eta_RH', 'bf_plot_id', 'bf_norm', 'bf_cnb',
                    'mode','vis_type', 'ez_name', 'vis_fimage', 'vis_showbfs',
-                   'vbounds', 'vis_h', 'vis_v']
+                   'vbounds', 'vis_h', 'vis_v', 'bf_norm_type', 'tr_names']
 required_params = ['E_0','theta_0','N_0','alpha','eta','P','DELTA','T',
                    'tau_p','tau_c','model','model_shortname','bf_reverse',
                    'bf_continuation','llsim','ulsim','sim_step','llcyc',
@@ -77,14 +83,14 @@ required_params = ['E_0','theta_0','N_0','alpha','eta','P','DELTA','T',
 known_str_params = ['desc', 'enc', 'root_dir', 'model','mode',
                     'model_shortname', 'vis_type', 'ez_name']
 
-# vbounds notes: 
+# vbounds notes:
 #mode 0: no bounds enforce
 #mode 1: 'au': absolute upper, 'al': absolute lower
 #mode 2: '+-' is the boundaries, 'o' is optional and is the offset
-known_dict_params = ['vbounds']
+known_dict_params = ['vbounds', 'tr_names']
 
 #known_modes = ['auto', 'single', 'bif', 'multi', 'stability']
-implemented_modes = ['bif']
+implemented_modes = ['bif', 'single']
 axis_mode_support = ['linspace', 'arange', 'exp', 'percent']
 pct_axis_support = ['eta']
 
@@ -108,7 +114,7 @@ def create_short_desc(c, sep='-'):
 
     desc += sep + str(c['c_id'])
     try:
-        plot_id_str = '-' + c['bf_plot_id']
+        plot_id_str = '-' + str(c['bf_plot_id'])
         desc += plot_id_str
     except KeyError:
         pass

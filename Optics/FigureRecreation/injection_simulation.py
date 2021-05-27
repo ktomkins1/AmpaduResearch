@@ -3,6 +3,13 @@ from numpy.lib.scimath import sqrt
 from scipy.integrate import ode, solve_ivp
 from maxima_determination import get_extrema
 
+def get_initial_conditions(config):
+    #Define initial values
+    #must be prepared
+    #TODO: generalize
+    init=[config['E_0'],config['theta_0'],config['N_0']]
+    return init
+
 '''
     One single frame of integration
 
@@ -71,8 +78,23 @@ def normalize_trace(trace, width):
     return trace - rolling_avg
 
 ''' function eventually for getting a single trace '''
-def trace(setup, config):
-    pass
+def trace(results, setup, c):
+    init = get_initial_conditions(c)
+
+    #Get the system of equations
+    funcs = setup(c['P'], c['DELTA'], c['alpha'], c['eta'], c['T'])
+
+    #run the simulation
+    y, t = simulate_functions(init, funcs, c['llsim'], c['ulsim'],
+                              step=c['sim_step'])
+    results['ys'] = y
+    results['axis'] = t
+
+    f_out = y[0][c['llcyc']:c['ulcyc']]
+    freqs, faxis = freq_analysis_trace(f_out, t[c['llcyc']:c['ulcyc']], 1.0)
+
+    results['fr'] = freqs
+    results['fx'] = faxis
 
 
 '''
@@ -89,9 +111,7 @@ def trace(setup, config):
     returns: a numpy array of frequencies which occurred at each point
 '''
 def general_sweep(results, setup, c, sweep_key, sweep_space, axis_gen=np.linspace):
-    #Define initial values
-    init=[c['E_0'],c['theta_0'],c['N_0']] #must be prepared
-
+    init = get_initial_conditions(c)
     #The Eta axis
     print('Sweep space is {}'.format(sweep_space))
     sweep_values = axis_gen(*sweep_space)
@@ -116,10 +136,12 @@ def general_sweep(results, setup, c, sweep_key, sweep_space, axis_gen=np.linspac
         #Get the system of equations
         funcs = setup(c['P'], c['DELTA'], c['alpha'], c['eta'], c['T'])
 
-        #Take a window into the relevant portion of the E-field trace
+        #run the simulation
         y, t = simulate_functions(init, funcs, c['llsim'], c['ulsim'],
                                   step=c['sim_step'])
-        f_out = y[0][c['llcyc']:c['ulcyc']] #y[0] is the follower E-field
+        #Take a window into the relevant portion of the E-field trace
+        #y[0] is the follower E-field.  TODO: generalize
+        f_out = y[0][c['llcyc']:c['ulcyc']]
         if c['bf_continuation']: init = [abs(i[-1]) for i in y] #y is trace list
 
         #Perform frequency analysis on that window

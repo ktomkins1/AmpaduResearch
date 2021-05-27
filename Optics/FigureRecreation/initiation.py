@@ -51,11 +51,13 @@ def bf_dispatch(setup, config):
         sim.general_sweep(
                 results, setup, config, skey, sweep_params, rn
             )
+
         if 'bf_cnb' in config.keys():
             bfd.get_cnb_from_groups(results, config['bf_cnb'])
+
         config[skey] = sweep #set our config back to original value
-    else:
-        results = sim.trace(setup, config)
+    if config['mode'] == 'single':
+        sim.trace(results, setup, config)
 
     #create new directory for storing these results
     targetdir = os.path.join(config['root_dir'], config['desc'])
@@ -78,8 +80,11 @@ def bf_dispatch(setup, config):
         print(e)
 
     #save images of results
-    vis.plot_bif_diag(results, skey, config, targetdir)
-    #vis.plot_waterfall(results['axis'], results['fr'], config, skey)
+    if config['mode'] == 'bif':
+        vis.plot_bif_diag(results, skey, config, targetdir)
+        #vis.plot_waterfall(results['axis'], results['fr'], config, skey)
+    if config['mode'] == 'single':
+        vis.plot_n_traces(results, config)
 
 def dispatch_saved(fname, config):
     with open(fname, 'rb') as f:
@@ -92,7 +97,12 @@ def dispatch_saved(fname, config):
 
 def enumerate_configs(c):
     c['bf'] = 0
-    #edict = {}
+    c_mode = 0
+    try:
+        c_mode = c['c_mode']
+    except KeyError:
+        pass
+
     ekeys = []
     clist = []
 
@@ -105,7 +115,10 @@ def enumerate_configs(c):
         elif type(c[k]) == type({}):
             c['bf'] += 1
 
-    clist = enumerate_configs_r(c, ekeys)
+    if c_mode == 0:
+        clist = enumerate_configs_mode_0(c, ekeys)
+    else:
+        clist = enumerate_configs_r(c_, ekeys)
 
     clist_ = []
     for c in clist:
@@ -114,7 +127,41 @@ def enumerate_configs(c):
     #return clist, edict, ekeys
     return clist, ekeys
 
+#break a configuration based on equal length lists of n0, n1, ... parameters
+#   such that these get dispersed as a list of n0 configurations with sub-lists
+def enumerate_configs_mode_0(c, ekeys):
+    if ekeys == []: return [c]
+
+    lens = {}
+    list_lens = []
+    for e in ekeys:
+        lste = c[e]
+        lenk = str(len(lste))
+        list_lens.append(len(lste))
+        try:
+            lens[lenk][e] = lste
+        except KeyError:
+            lens[lenk] = {e:lste}
+
+    l = None
+    ks = []
+    for l in sorted(list_lens, reverse=True):
+        ks = list(lens[str(l)].keys())
+        if len(ks) > 1:
+            break
+    # l is now the first length of two or more lists of enumerable parameters
+
+    ekeys_ = [e for e in ekeys if e not in ks]
+    clist = []
+    for en in range(l):
+        d = dict(c)
+        for k in ks:
+            d[k] = lens[str(l)][k][en]
+        clist += enumerate_configs_r(d, ekeys_)
+    return clist
+
 def enumerate_configs_r(c, ekeys):
+    global current_cid
     if ekeys == []:
         d = c.copy()
         current_cid += 1
@@ -135,6 +182,14 @@ def clean_config(c):
             exec('c[\'{0}\']='.format(k) + c[k])
     cc.fix_config(c)
 
+#def detect_sweep_key(c):
+#    skey = detect_sweep_key_(c)
+#    if type(skey) is type(None):
+#        print('Found no sweep variable')
+#    else:
+#        print('Found sweep variable: {}'.format(skey))
+#    return skey
+#
 def detect_sweep_key(c):
     for s in c.keys():
         if s in cc.known_dict_params: continue
