@@ -111,8 +111,10 @@ def create_short_desc(c, sep='-'):
     r, cnt = c['bf_reverse'], c['bf_continuation']
     if r or cnt:
         desc += sep + r*'r' + cnt*'c'
-
-    desc += sep + str(c['c_id'])
+    try:
+        desc += sep + str(c['c_id'])
+    except KeyError:
+        desc += sep + 'ogcnf'
     try:
         plot_id_str = '-' + str(c['bf_plot_id'])
         desc += plot_id_str

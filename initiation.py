@@ -263,8 +263,12 @@ if __name__ == '__main__':
     cnfname = args.cfilename
     if 'configs/' in cnfname:
         cnfname = os.path.basename(cnfname)
-    with open('configs/' + cnfname, 'r') as fp:
-        config = json.load(fp)
+    try:
+        with open('configs/' + cnfname, 'r') as fp:
+            config = json.load(fp)
+    except FileNotFoundError:
+        config = cc.config
+        print("Using default configuration")
 
     if args.rfilename:
         #either find a config based on the given results filename or by cfilen
